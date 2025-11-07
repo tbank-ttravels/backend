@@ -7,8 +7,5 @@ spring.datasource.password=psql_passwd
 # Debug SQL request
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
-
-
-jwt.secret.key=jwt_secret_key
-jwt.access-token.expiration.ms=3600000
-jwt.refresh-token.expiration.ms=60480000
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=DEBUG
