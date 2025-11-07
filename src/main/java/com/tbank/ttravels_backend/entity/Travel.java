@@ -7,7 +7,7 @@ import lombok.*;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "travels", indexes = { @Index(name = "idx_travels_owner", columnList = "owner_id") } )
+@Table(name = "travels", indexes = {@Index(name = "idx_travels_owner", columnList = "owner_id")})
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Travel {
     @Id
