@@ -13,9 +13,9 @@ public class PasswordCredential {
 
     @MapsId
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", foreignKey = @ForeignKey(name = "fk_password_user"))
+    @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     private String passwordHash;
 }
