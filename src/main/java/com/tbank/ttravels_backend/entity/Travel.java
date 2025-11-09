@@ -3,6 +3,8 @@ package com.tbank.ttravels_backend.entity;
 import com.tbank.ttravels_backend.enums.TravelStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 
@@ -27,5 +29,6 @@ public class Travel {
     private User owner;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private TravelStatus status;
 }
