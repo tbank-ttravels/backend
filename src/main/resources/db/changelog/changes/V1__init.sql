@@ -69,16 +69,16 @@ CREATE TABLE IF NOT EXISTS expenses (
     CONSTRAINT chk_positive_money_expenses CHECK (sum >= 0)
     );
 
--- Table members_expens
-CREATE TABLE IF NOT EXISTS members_expens (
+-- Table members_expenses
+CREATE TABLE IF NOT EXISTS members_expenses (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
-    expens_id BIGINT NOT NULL,
+    expense_id BIGINT NOT NULL,
     share NUMERIC(14,2) NOT NULL,
-    CONSTRAINT fk_members_expens_user
+    CONSTRAINT fk_members_expenses_user
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_members_expens_expense
-    FOREIGN KEY (expens_id) REFERENCES expenses(id) ON DELETE CASCADE
+    CONSTRAINT fk_members_expenses_expense
+    FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE CASCADE
     );
 
 -- Table transfers
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS transfers (
     id BIGSERIAL PRIMARY KEY,
     travel_id BIGINT NOT NULL,
     sender_id BIGINT NOT NULL,
-    recieve_id BIGINT NOT NULL,
+    recipient_id BIGINT NOT NULL,
     sum NUMERIC(14,2) NOT NULL,
     date TIMESTAMPTZ NOT NULL,
     CONSTRAINT fk_transfers_travel
@@ -94,9 +94,9 @@ CREATE TABLE IF NOT EXISTS transfers (
     CONSTRAINT fk_transfers_sender
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE RESTRICT,
     CONSTRAINT fk_transfers_receiver
-    FOREIGN KEY (recieve_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE RESTRICT,
     CONSTRAINT chk_positive_money_transfers CHECK (sum >= 0),
-    CONSTRAINT chk_no_self_transfer CHECK (sender_id <> recieve_id)
+    CONSTRAINT chk_no_self_transfer CHECK (sender_id <> recipient_id)
     );
 
 -- Table history
