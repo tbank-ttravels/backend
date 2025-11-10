@@ -50,15 +50,14 @@ public class Expense {
     @Setter(AccessLevel.NONE)
     private Set<MemberExpense> memberExpenses = new HashSet<>();
 
-    // TODO
-//    @ManyToOne
-//    @JoinColumn(name= "category_id")
-//    private CategoryExpenses categoryExpenses;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name= "category_id")
+    private Category category;
 
 
     // Фабричный метод создания Траты
-    public static Expense create(String name, String description, BigDecimal sum,
-                                 OffsetDateTime date, User payer, Travel travel) {
+    public static Expense create(String name, String description, BigDecimal sum, OffsetDateTime date,
+                                 Category category, User payer, Travel travel) {
 
         if (payer == null)
             throw new IllegalArgumentException("Expense creation failed: payer must not be null");
@@ -80,6 +79,7 @@ public class Expense {
         expense.date = date;
         expense.payer = payer;
         expense.travel = travel;
+        expense.category = category;
 
         return expense;
     }
