@@ -14,13 +14,11 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "history")
 @Getter
-@Setter
 @NoArgsConstructor
 public class History {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Setter(AccessLevel.NONE)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,9 +30,9 @@ public class History {
     private User author;
 
     @Column(name = "date", updatable = false)
-    @Setter(AccessLevel.NONE)
     private OffsetDateTime createdAt;
 
+    @Setter
     @Column(name = "description")
     private String description;
 
@@ -48,24 +46,39 @@ public class History {
     public static History create(Travel travel, User author,
                                  String description, HistoryType type) {
 
+        History history = new History();
+
+        history.setAuthor(author);
+        history.setTravel(travel);
+        history.setType(type);
+        history.description = description;
+
+        return history;
+
+    }
+
+    public void setTravel(Travel travel) {
+
         if (travel == null)
             throw new IllegalArgumentException("History creation failed: travel must not be null");
+
+        this.travel = travel;
+    }
+
+    public void setAuthor(User author) {
 
         if (author == null)
             throw new IllegalArgumentException("History creation failed: author must not be null");
 
+        this.author = author;
+    }
+
+    public void setType(HistoryType type) {
+
         if (type == null)
             throw new IllegalArgumentException("History creation failed: type must not be null");
 
-        History history = new History();
-
-        history.travel = travel;
-        history.author = author;
-        history.description = description;
-        history.type = type;
-
-        return history;
-
+        this.type = type;
     }
 
     @PrePersist

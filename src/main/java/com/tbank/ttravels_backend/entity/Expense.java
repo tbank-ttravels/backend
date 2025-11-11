@@ -1,7 +1,6 @@
 package com.tbank.ttravels_backend.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,24 +14,25 @@ import java.util.Set;
 @Entity
 @Table(name = "expenses")
 @Getter
-@Setter
 @NoArgsConstructor
 public class Expense {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Setter(AccessLevel.NONE)
     private Long id;
 
+    @Setter
     @Column(name = "name")
     private String name;
 
+    @Setter
     @Column(name = "description")
     private String description;
 
     @Column(name = "sum")
     private BigDecimal sum;
 
+    @Setter
     @Column(name = "date")
     private OffsetDateTime date;
 
@@ -47,11 +47,11 @@ public class Expense {
     @OneToMany(cascade = CascadeType.ALL,
             mappedBy = "expense",
             orphanRemoval = true)
-    @Setter(AccessLevel.NONE)
     private Set<MemberExpense> memberExpenses = new HashSet<>();
 
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name= "category_id")
+    @JoinColumn(name = "category_id")
     private Category category;
 
 
@@ -59,26 +59,14 @@ public class Expense {
     public static Expense create(String name, String description, BigDecimal sum, OffsetDateTime date,
                                  Category category, User payer, Travel travel) {
 
-        if (payer == null)
-            throw new IllegalArgumentException("Expense creation failed: payer must not be null");
-
-        if (travel == null)
-            throw new IllegalArgumentException("Expense creation failed: travel must not be null");
-
-        if (sum == null)
-            throw new IllegalArgumentException("Expense creation failed: sum must not be null");
-
-        if (sum.compareTo(BigDecimal.ZERO) <= 0)
-            throw new IllegalArgumentException("Expense creation failed: sum must be greater than zero");
-
         Expense expense = new Expense();
 
+        expense.setSum(sum);
+        expense.setPayer(payer);
+        expense.setTravel(travel);
         expense.name = name;
         expense.description = description;
-        expense.sum = sum;
         expense.date = date;
-        expense.payer = payer;
-        expense.travel = travel;
         expense.category = category;
 
         return expense;
@@ -100,5 +88,32 @@ public class Expense {
             this.memberExpenses.remove(memberExpense);
             memberExpense.setExpense(null);
         }
+    }
+
+    public void setSum(BigDecimal sum) {
+
+        if (sum == null)
+            throw new IllegalArgumentException("Expense creation failed: sum must not be null");
+
+        if (sum.compareTo(BigDecimal.ZERO) <= 0)
+            throw new IllegalArgumentException("Expense creation failed: sum must be greater than zero");
+
+        this.sum = sum;
+    }
+
+    public void setPayer(User payer) {
+
+        if (payer == null)
+            throw new IllegalArgumentException("Expense creation failed: payer must not be null");
+
+        this.payer = payer;
+    }
+
+    public void setTravel(Travel travel) {
+
+        if (travel == null)
+            throw new IllegalArgumentException("Expense creation failed: travel must not be null");
+
+        this.travel = travel;
     }
 }
