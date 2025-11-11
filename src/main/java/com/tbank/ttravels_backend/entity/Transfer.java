@@ -24,8 +24,8 @@ public class Transfer {
     private User sender;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recieve_id", nullable = false)
-    private User receiver;
+    @JoinColumn(name = "recipient_id", nullable = false)
+    private User recipient;
 
     @Column(name = "sum", nullable = false)
     private BigDecimal sum;
