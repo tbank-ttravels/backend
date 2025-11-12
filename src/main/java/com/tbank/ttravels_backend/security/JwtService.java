@@ -1,4 +1,4 @@
-package com.tbank.ttravels_backend.service;
+package com.tbank.ttravels_backend.security;
 
 import com.tbank.ttravels_backend.config.JwtProperties;
 import io.jsonwebtoken.Claims;
