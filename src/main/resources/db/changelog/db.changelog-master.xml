@@ -23,4 +23,13 @@
                     splitStatements="true"
                     endDelimiter=";"/>
         </changeSet>
+
+    <changeSet id="V2-refresh-tokens" author="you">
+        <sqlFile
+                path="changes/V2__refresh_tokens.sql"
+                relativeToChangelogFile="true"
+                splitStatements="true"
+                endDelimiter=";"/>
+    </changeSet>
+
 </databaseChangeLog>
