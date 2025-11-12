@@ -1,5 +1,6 @@
 package com.tbank.ttravels_backend.entity;
 
+import com.tbank.ttravels_backend.enums.MemberRole;
 import com.tbank.ttravels_backend.enums.MemberStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,4 +26,8 @@ public class TravelMember {
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private MemberStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    private MemberRole role;
 }

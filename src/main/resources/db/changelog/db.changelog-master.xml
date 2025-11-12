@@ -32,4 +32,12 @@
                 endDelimiter=";"/>
     </changeSet>
 
+    <changeSet id="V3__member_role" author="you">
+        <sqlFile
+                path="changes/V3__member_role.sql"
+                relativeToChangelogFile="true"
+                splitStatements="true"
+                endDelimiter=";"/>
+    </changeSet>
+
 </databaseChangeLog>
