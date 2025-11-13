@@ -11,19 +11,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthRegisterRequest {
-    @NotBlank(message = "Поле телефон обязательно!")
+    @NotBlank(message = "Поле обязательно!")
     @Pattern(regexp = "^\\+?7\\d{10}$", message = "Неверный номер!")
     private String phone;
 
-    @NotBlank(message = "Поле имя обязательно!")
-    @Size(max = 50, message = "Имя пользователя не может быть больше 50 символов!")
+    @NotBlank(message = "Поле обязательно!")
+    @Size(max = 50, message = "Не больше 50 символов!")
     private String name;
 
-    @NotBlank(message = "Поле фамилия обязательно!")
-    @Size(max = 50, message = "Фамилия пользователя не может быть больше 50 символов!")
+    @NotBlank(message = "Поле обязательно!")
+    @Size(max = 50, message = "Не больше 50 символов!")
     private String surname;
 
-    @NotBlank(message = "Поле пароль обязательно!")
-    @Size(min = 8, max = 64, message = "Пароль не может быть меньше 8 и больше 64 символов!")
+    @NotBlank(message = "Поле обязательно!")
+    @Size(min = 8, max = 64, message = "Не меньше 8 и больше 64 символов!")
     private String password;
 }

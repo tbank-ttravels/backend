@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChangePasswordRequest {
-    @NotBlank(message = "Поле текущий пароль обязательно!")
+    @NotBlank(message = "Поле обязательно!")
     private String currentPassword;
 
-    @NotBlank(message = "Поле новый пароль обязательно!")
-    @Size(min = 8, max = 64, message = "Пароль не может быть меньше 8 и больше 64 символов!")
+    @NotBlank(message = "Поле обязательно!")
+    @Size(min = 8, max = 64, message = "Не меньше 8 и больше 64 символов!")
     private String newPassword;
 }
