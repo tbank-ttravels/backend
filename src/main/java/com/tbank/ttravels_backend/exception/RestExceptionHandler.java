@@ -1,4 +1,4 @@
-package com.tbank.ttravels_backend.security.exception;
+package com.tbank.ttravels_backend.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +54,16 @@ public class RestExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<Object> handleNoHandler(NoResourceFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, "Endpoint не найден");
+    }
+
+    @ExceptionHandler(UserNotFound.class)
+    public ResponseEntity<Object> handleUserNotExist(UserNotFound ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(TravelNotFound.class)
+    public ResponseEntity<Object> handleTravelNotExist(TravelNotFound ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
