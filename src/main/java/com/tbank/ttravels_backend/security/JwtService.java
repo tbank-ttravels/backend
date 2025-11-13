@@ -2,7 +2,6 @@ package com.tbank.ttravels_backend.security;
 
 import com.tbank.ttravels_backend.config.JwtProperties;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
@@ -53,23 +52,6 @@ public class JwtService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-    }
-
-    public Claims parseRefresh(String token) {
-        return Jwts.parser()
-                .verifyWith(refreshKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
-
-    public boolean isAccessTokenExpired(String token) {
-        try {
-            Claims claims = parseAccess(token);
-            return claims.getExpiration().before(new Date());
-        } catch (ExpiredJwtException ex) {
-            return true;
-        }
     }
 
     private SecretKey accessKey() {
