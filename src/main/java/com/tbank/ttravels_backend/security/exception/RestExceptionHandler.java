@@ -2,9 +2,12 @@ package com.tbank.ttravels_backend.security.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.OffsetDateTime;
 import java.util.HashMap;
@@ -36,6 +39,21 @@ public class RestExceptionHandler {
                 .map(err -> err.getField() + ": " + err.getDefaultMessage())
                 .orElse("Validation error");
         return buildResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Object> handleUnreadable(HttpMessageNotReadableException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Некорректный JSON");
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Object> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        return buildResponse(HttpStatus.METHOD_NOT_ALLOWED, "Метод не поддерживается");
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Object> handleNoHandler(NoResourceFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Endpoint не найден");
     }
 
     @ExceptionHandler(Exception.class)
