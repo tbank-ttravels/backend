@@ -28,6 +28,7 @@ public class TokenIssuer {
         RefreshToken refreshToken = refreshTokenRepository.save(
                 RefreshToken.builder()
                         .user(user)
+                        .tokenHash("PENDING")
                         .expiresAt(now().plus(jwtProperties.getRefreshTtl()))
                         .revoked(false)
                         .build()
@@ -50,6 +51,7 @@ public class TokenIssuer {
         RefreshToken newToken = refreshTokenRepository.save(
                 RefreshToken.builder()
                         .user(storedToken.getUser())
+                        .tokenHash("PENDING")
                         .expiresAt(now().plus(jwtProperties.getRefreshTtl()))
                         .revoked(false)
                         .build()
