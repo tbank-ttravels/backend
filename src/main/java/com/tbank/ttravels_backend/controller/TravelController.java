@@ -23,7 +23,7 @@ public class TravelController {
         return travelService.createTravel(request, principal.getId());
     }
 
-    @GetMapping("/travels")
+    @GetMapping("/mytravels")
     @ResponseStatus(HttpStatus.OK)
     public MyTravelsResponse getMyTravels(@AuthenticationPrincipal UserPrincipal principal) {
         return travelService.getMyTravels(principal.getId());

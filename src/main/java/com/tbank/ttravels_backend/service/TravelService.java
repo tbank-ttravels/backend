@@ -6,6 +6,7 @@ import com.tbank.ttravels_backend.entity.TravelMember;
 import com.tbank.ttravels_backend.entity.User;
 import com.tbank.ttravels_backend.enums.MemberRole;
 import com.tbank.ttravels_backend.enums.MemberStatus;
+import com.tbank.ttravels_backend.enums.TravelStatus;
 import com.tbank.ttravels_backend.exception.TravelNotFound;
 import com.tbank.ttravels_backend.exception.UserNotFound;
 import com.tbank.ttravels_backend.repository.TravelMemberRepository;
@@ -34,6 +35,7 @@ public class TravelService {
                 .description(request.getDescription())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
+                .status(TravelStatus.ACTIVE)
                 .owner(owner)
                 .build();
         Travel savedTravel = travelRepository.save(newTravel);
@@ -54,6 +56,7 @@ public class TravelService {
                 savedTravel.getEndDate());
     }
 
+    @Transactional
     public MyTravelsResponse getMyTravels(Long userId) {
         List<TravelMember> memberships = travelMemberRepository
                 .findAllByUserIdAndStatus(userId, MemberStatus.ACCEPTED);
@@ -93,6 +96,7 @@ public class TravelService {
         travelMemberRepository.save(newMember);
     }
 
+    @Transactional
     public TravelMembersResponse getTravelMembers(Long travelId) {
         List<TravelMember> members = travelMemberRepository.findByTravelId(travelId);
 
