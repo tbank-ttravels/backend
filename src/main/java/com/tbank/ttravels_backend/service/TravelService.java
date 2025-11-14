@@ -7,10 +7,7 @@ import com.tbank.ttravels_backend.entity.User;
 import com.tbank.ttravels_backend.enums.MemberRole;
 import com.tbank.ttravels_backend.enums.MemberStatus;
 import com.tbank.ttravels_backend.enums.TravelStatus;
-import com.tbank.ttravels_backend.exception.InvalidDateRangeException;
-import com.tbank.ttravels_backend.exception.OwnerRemovalNotAllowedException;
-import com.tbank.ttravels_backend.exception.TravelNotFoundException;
-import com.tbank.ttravels_backend.exception.UserNotFoundException;
+import com.tbank.ttravels_backend.exception.*;
 import com.tbank.ttravels_backend.repository.TravelMemberRepository;
 import com.tbank.ttravels_backend.repository.TravelRepository;
 import com.tbank.ttravels_backend.repository.UserRepository;
@@ -139,7 +136,7 @@ public class TravelService {
                 .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
 
         if (travel.getStatus() == TravelStatus.CLOSED) {
-            return;
+            throw new ConflictStateException("Поездка уже закрыта");
         }
 
         travel.setStatus(TravelStatus.CLOSED);
@@ -152,7 +149,7 @@ public class TravelService {
                 .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
 
         if (travel.getStatus() == TravelStatus.ACTIVE) {
-            return;
+            throw new ConflictStateException("Поездка уже открыта");
         }
 
         travel.setStatus(TravelStatus.ACTIVE);
