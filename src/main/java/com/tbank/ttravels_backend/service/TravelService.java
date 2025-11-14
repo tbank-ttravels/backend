@@ -173,7 +173,7 @@ public class TravelService {
                 .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
 
         if (travelMemberRepository.existsByTravelIdAndUserId(travelId, invitedUser.getId())) {
-            return;
+            throw new ConflictStateException("Пользователь уже приглашён или является участником поездки");
         }
 
         TravelMember newMember = TravelMember.builder()
