@@ -9,8 +9,8 @@ import com.tbank.ttravels_backend.enums.MemberStatus;
 import com.tbank.ttravels_backend.enums.TravelStatus;
 import com.tbank.ttravels_backend.exception.InvalidDateRangeException;
 import com.tbank.ttravels_backend.exception.OwnerRemovalNotAllowedException;
-import com.tbank.ttravels_backend.exception.TravelNotFound;
-import com.tbank.ttravels_backend.exception.UserNotFound;
+import com.tbank.ttravels_backend.exception.TravelNotFoundException;
+import com.tbank.ttravels_backend.exception.UserNotFoundException;
 import com.tbank.ttravels_backend.repository.TravelMemberRepository;
 import com.tbank.ttravels_backend.repository.TravelRepository;
 import com.tbank.ttravels_backend.repository.UserRepository;
@@ -31,7 +31,7 @@ public class TravelService {
     @Transactional
     public TravelResponse createTravel(CreateTravelRequest request, Long userId) {
         User owner = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFound("Пользователь не найден"));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
 
         Travel newTravel = Travel.builder()
                 .name(request.getName())
@@ -85,7 +85,7 @@ public class TravelService {
     @Transactional
     public TravelResponse getTravel(Long travelId) {
         Travel travel = travelRepository.findById(travelId)
-                .orElseThrow(() -> new TravelNotFound("Поездка не найдена"));
+                .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
 
         return new TravelResponse(
                 travel.getId(),
@@ -100,7 +100,7 @@ public class TravelService {
     @Transactional
     public TravelResponse editTravel(Long travelId, EditTravelRequest request) {
         Travel travel = travelRepository.findById(travelId)
-                .orElseThrow(() -> new TravelNotFound("Поездка не найдена"));
+                .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
 
         OffsetDateTime updatedStart = request.getStartDate() != null ? request.getStartDate() : travel.getStartDate();
         OffsetDateTime updatedEnd = request.getEndDate() != null ? request.getEndDate() : travel.getEndDate();
@@ -136,7 +136,7 @@ public class TravelService {
     @Transactional
     public void closeTravel(Long travelId) {
         Travel travel = travelRepository.findById(travelId)
-                .orElseThrow(() -> new TravelNotFound("Поездка не найдена"));
+                .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
 
         if (travel.getStatus() == TravelStatus.CLOSED) {
             return;
@@ -149,7 +149,7 @@ public class TravelService {
     @Transactional
     public void reopenTravel(Long travelId) {
         Travel travel = travelRepository.findById(travelId)
-                .orElseThrow(() -> new TravelNotFound("Поездка не найдена"));
+                .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
 
         if (travel.getStatus() == TravelStatus.ACTIVE) {
             return;
@@ -162,7 +162,7 @@ public class TravelService {
     @Transactional
     public void deleteTravel(Long travelId) {
         Travel travel = travelRepository.findById(travelId)
-                .orElseThrow(() -> new TravelNotFound("Поездка не найдена"));
+                .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
 
         travelRepository.delete(travel);
     }
@@ -170,10 +170,10 @@ public class TravelService {
     @Transactional
     public void inviteMember(Long travelId, String phone) {
         Travel travel = travelRepository.findById(travelId)
-                .orElseThrow(() -> new TravelNotFound("Поездка не найдена"));
+                .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
 
         User invitedUser = userRepository.findByPhone(phone)
-                .orElseThrow(() -> new UserNotFound("Пользователь не найден"));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
 
         if (travelMemberRepository.existsByTravelIdAndUserId(travelId, invitedUser.getId())) {
             return;
@@ -213,7 +213,7 @@ public class TravelService {
     @Transactional
     public void respondToInvite(Long travelId, Long userId, boolean accept) {
         TravelMember invite = travelMemberRepository.findByTravelIdAndUserIdAndStatus(travelId, userId, MemberStatus.INVITED)
-                .orElseThrow(() -> new TravelNotFound("Приглашение не найдено"));
+                .orElseThrow(() -> new TravelNotFoundException("Приглашение не найдено"));
 
         if (accept) {
             invite.setStatus(MemberStatus.ACCEPTED);
@@ -246,7 +246,7 @@ public class TravelService {
     @Transactional
     public void kickMember(Long travelId, Long userId) {
         TravelMember member = travelMemberRepository.findByTravelIdAndUserId(travelId, userId)
-                .orElseThrow(() -> new UserNotFound("Пользователь не найден в поездке"));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден в поездке"));
 
         if (member.getRole() == MemberRole.OWNER) {
             throw new OwnerRemovalNotAllowedException("Нельзя исключить владельца поездки");
@@ -258,7 +258,7 @@ public class TravelService {
     @Transactional
     public void leaveTravel(Long travelId, Long userId) {
         TravelMember member = travelMemberRepository.findByTravelIdAndUserId(travelId, userId)
-                .orElseThrow(() -> new UserNotFound("Пользователь не найден в поездке"));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден в поездке"));
 
         if (member.getRole() == MemberRole.OWNER) {
             throw new OwnerRemovalNotAllowedException("Владелец не может покинуть поездку");
