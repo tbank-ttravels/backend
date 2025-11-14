@@ -18,29 +18,104 @@ public class TravelController {
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
-    public CreateTravelResponse create(@Valid @RequestBody CreateTravelRequest request,
-                                       @AuthenticationPrincipal UserPrincipal principal) {
+    public TravelResponse create(@Valid @RequestBody CreateTravelRequest request,
+                                 @AuthenticationPrincipal UserPrincipal principal) {
         return travelService.createTravel(request, principal.getId());
     }
 
-    @GetMapping("/mytravels")
+    @GetMapping("/my")
     @ResponseStatus(HttpStatus.OK)
     public MyTravelsResponse getMyTravels(@AuthenticationPrincipal UserPrincipal principal) {
         return travelService.getMyTravels(principal.getId());
     }
 
+    @GetMapping("/{travelId}")
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @ResponseStatus(HttpStatus.OK)
+    public TravelResponse getTravel(@PathVariable Long travelId,
+                                    @AuthenticationPrincipal UserPrincipal principal) {
+        return travelService.getTravel(travelId);
+    }
+
+    @PostMapping("/{travelId}/edit")
+    @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
+    @ResponseStatus(HttpStatus.OK)
+    public TravelResponse editTravel(@PathVariable Long travelId,
+                                     @Valid @RequestBody EditTravelRequest request,
+                                     @AuthenticationPrincipal UserPrincipal principal) {
+        return travelService.editTravel(travelId, request);
+    }
+
+    @PostMapping("/{travelId}/close")
+    @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
+    @ResponseStatus(HttpStatus.OK)
+    public void closeTravel(@PathVariable Long travelId,
+                            @AuthenticationPrincipal UserPrincipal principal) {
+        travelService.closeTravel(travelId);
+    }
+
+    @PostMapping("/{travelId}/reopen")
+    @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
+    @ResponseStatus(HttpStatus.OK)
+    public void reopenTravel(@PathVariable Long travelId,
+                             @AuthenticationPrincipal UserPrincipal principal) {
+        travelService.reopenTravel(travelId);
+    }
+
+    @PostMapping("/{travelId}/delete")
+    @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
+    @ResponseStatus(HttpStatus.OK)
+    public void deleteTravel(@PathVariable Long travelId,
+                             @AuthenticationPrincipal UserPrincipal principal) {
+        travelService.deleteTravel(travelId);
+    }
+
     @PostMapping("/{travelId}/invite")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void inviteMember(@PathVariable Long travelId,
-                             @Valid @RequestBody InviteRequest request) {
+                             @Valid @RequestBody InviteRequest request,
+                             @AuthenticationPrincipal UserPrincipal principal) {
         travelService.inviteMember(travelId, request.getPhone());
     }
 
-    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
-    @GetMapping("/{travelId}/members")
+    @GetMapping("/invites")
     @ResponseStatus(HttpStatus.OK)
-    public TravelMembersResponse getTravelMembers(@PathVariable Long travelId) {
+    public InvitesResponse getInvites(@AuthenticationPrincipal UserPrincipal principal) {
+        return travelService.getInvites(principal.getId());
+    }
+
+    @PostMapping("/invites/{travelId}/respond")
+    @PreAuthorize("@travelSecurity.isInvited(#travelId, principal.id)")
+    @ResponseStatus(HttpStatus.OK)
+    public void respondToInvite(@PathVariable Long travelId, @RequestParam boolean accept,
+                                @AuthenticationPrincipal UserPrincipal principal) {
+        travelService.respondToInvite(travelId, principal.getId(), accept);
+    }
+
+    @GetMapping("/{travelId}/members")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @ResponseStatus(HttpStatus.OK)
+    public TravelMembersResponse getTravelMembers(@PathVariable Long travelId,
+                                                  @AuthenticationPrincipal UserPrincipal principal) {
         return travelService.getTravelMembers(travelId);
     }
+
+    @PostMapping("/{travelId}/kick/{userId}")
+    @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
+    @ResponseStatus(HttpStatus.OK)
+    public void kickMember(@PathVariable Long travelId,
+                           @PathVariable Long userId,
+                           @AuthenticationPrincipal UserPrincipal principal) {
+        travelService.kickMember(travelId, userId);
+    }
+
+    @PostMapping("/{travelId}/leave")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @ResponseStatus(HttpStatus.OK)
+    public void leaveTravel(@PathVariable Long travelId,
+                            @AuthenticationPrincipal UserPrincipal principal) {
+        travelService.leaveTravel(travelId, principal.getId());
+    }
+
 }

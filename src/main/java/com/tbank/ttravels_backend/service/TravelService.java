@@ -7,6 +7,8 @@ import com.tbank.ttravels_backend.entity.User;
 import com.tbank.ttravels_backend.enums.MemberRole;
 import com.tbank.ttravels_backend.enums.MemberStatus;
 import com.tbank.ttravels_backend.enums.TravelStatus;
+import com.tbank.ttravels_backend.exception.InvalidDateRangeException;
+import com.tbank.ttravels_backend.exception.OwnerRemovalNotAllowedException;
 import com.tbank.ttravels_backend.exception.TravelNotFound;
 import com.tbank.ttravels_backend.exception.UserNotFound;
 import com.tbank.ttravels_backend.repository.TravelMemberRepository;
@@ -16,6 +18,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
@@ -26,7 +29,7 @@ public class TravelService {
     private final TravelMemberRepository travelMemberRepository;
 
     @Transactional
-    public CreateTravelResponse createTravel(CreateTravelRequest request, Long userId) {
+    public TravelResponse createTravel(CreateTravelRequest request, Long userId) {
         User owner = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFound("Пользователь не найден"));
 
@@ -48,12 +51,13 @@ public class TravelService {
                 .build();
         travelMemberRepository.save(ownerMember);
 
-        return new CreateTravelResponse(
+        return new TravelResponse(
                 savedTravel.getId(),
                 savedTravel.getName(),
                 savedTravel.getDescription(),
                 savedTravel.getStartDate(),
-                savedTravel.getEndDate());
+                savedTravel.getEndDate(),
+                savedTravel.getStatus());
     }
 
     @Transactional
@@ -78,6 +82,90 @@ public class TravelService {
         return new MyTravelsResponse(items);
     }
 
+    @Transactional
+    public TravelResponse getTravel(Long travelId) {
+        Travel travel = travelRepository.findById(travelId)
+                .orElseThrow(() -> new TravelNotFound("Поездка не найдена"));
+
+        return new TravelResponse(
+                travel.getId(),
+                travel.getName(),
+                travel.getDescription(),
+                travel.getStartDate(),
+                travel.getEndDate(),
+                travel.getStatus());
+
+    }
+
+    @Transactional
+    public TravelResponse editTravel(Long travelId, EditTravelRequest request) {
+        Travel travel = travelRepository.findById(travelId)
+                .orElseThrow(() -> new TravelNotFound("Поездка не найдена"));
+
+        OffsetDateTime updatedStart = request.getStartDate() != null ? request.getStartDate() : travel.getStartDate();
+        OffsetDateTime updatedEnd = request.getEndDate() != null ? request.getEndDate() : travel.getEndDate();
+
+        if (updatedStart != null && updatedEnd != null && !updatedEnd.isAfter(updatedStart)) {
+            throw new InvalidDateRangeException("Дата окончания должна быть позже даты начала");
+        }
+
+        if (request.getName() != null) {
+            travel.setName(request.getName());
+        }
+        if (request.getDescription() != null) {
+            travel.setDescription(request.getDescription());
+        }
+        if (request.getStartDate() != null) {
+            travel.setStartDate(request.getStartDate());
+        }
+        if (request.getEndDate() != null) {
+            travel.setEndDate(request.getEndDate());
+        }
+
+        Travel updatedTravel = travelRepository.save(travel);
+
+        return new TravelResponse(
+                updatedTravel.getId(),
+                updatedTravel.getName(),
+                updatedTravel.getDescription(),
+                updatedTravel.getStartDate(),
+                updatedTravel.getEndDate(),
+                updatedTravel.getStatus());
+    }
+
+    @Transactional
+    public void closeTravel(Long travelId) {
+        Travel travel = travelRepository.findById(travelId)
+                .orElseThrow(() -> new TravelNotFound("Поездка не найдена"));
+
+        if (travel.getStatus() == TravelStatus.CLOSED) {
+            return;
+        }
+
+        travel.setStatus(TravelStatus.CLOSED);
+        travelRepository.save(travel);
+    }
+
+    @Transactional
+    public void reopenTravel(Long travelId) {
+        Travel travel = travelRepository.findById(travelId)
+                .orElseThrow(() -> new TravelNotFound("Поездка не найдена"));
+
+        if (travel.getStatus() == TravelStatus.ACTIVE) {
+            return;
+        }
+
+        travel.setStatus(TravelStatus.ACTIVE);
+        travelRepository.save(travel);
+    }
+
+    @Transactional
+    public void deleteTravel(Long travelId) {
+        Travel travel = travelRepository.findById(travelId)
+                .orElseThrow(() -> new TravelNotFound("Поездка не найдена"));
+
+        travelRepository.delete(travel);
+    }
 
     @Transactional
     public void inviteMember(Long travelId, String phone) {
@@ -87,6 +175,10 @@ public class TravelService {
         User invitedUser = userRepository.findByPhone(phone)
                 .orElseThrow(() -> new UserNotFound("Пользователь не найден"));
 
+        if (travelMemberRepository.existsByTravelIdAndUserId(travelId, invitedUser.getId())) {
+            return;
+        }
+
         TravelMember newMember = TravelMember.builder()
                 .travel(travel)
                 .user(invitedUser)
@@ -94,6 +186,42 @@ public class TravelService {
                 .role(MemberRole.MEMBER)
                 .build();
         travelMemberRepository.save(newMember);
+    }
+
+    @Transactional
+    public InvitesResponse getInvites(Long userId) {
+        List<TravelMember> invites = travelMemberRepository
+                .findAllByUserIdAndStatus(userId, MemberStatus.INVITED);
+
+        List<InvitesItem> items = invites.stream()
+                .map(invite -> {
+                    Travel travel = invite.getTravel();
+                    return new InvitesItem(
+                            invite.getId(),
+                            travel.getName(),
+                            travel.getDescription(),
+                            travel.getStartDate(),
+                            travel.getEndDate()
+                    );
+                })
+                .toList();
+
+
+        return new InvitesResponse(items);
+    }
+
+    @Transactional
+    public void respondToInvite(Long travelId, Long userId, boolean accept) {
+        TravelMember invite = travelMemberRepository.findByTravelIdAndUserIdAndStatus(travelId, userId, MemberStatus.INVITED)
+                .orElseThrow(() -> new TravelNotFound("Приглашение не найдено"));
+
+        if (accept) {
+            invite.setStatus(MemberStatus.ACCEPTED);
+        } else {
+            invite.setStatus(MemberStatus.REJECTED);
+        }
+
+        travelMemberRepository.save(invite);
     }
 
     @Transactional
@@ -113,6 +241,30 @@ public class TravelService {
                 .toList();
 
         return new TravelMembersResponse(items);
+    }
+
+    @Transactional
+    public void kickMember(Long travelId, Long userId) {
+        TravelMember member = travelMemberRepository.findByTravelIdAndUserId(travelId, userId)
+                .orElseThrow(() -> new UserNotFound("Пользователь не найден в поездке"));
+
+        if (member.getRole() == MemberRole.OWNER) {
+            throw new OwnerRemovalNotAllowedException("Нельзя исключить владельца поездки");
+        }
+
+        travelMemberRepository.delete(member);
+    }
+
+    @Transactional
+    public void leaveTravel(Long travelId, Long userId) {
+        TravelMember member = travelMemberRepository.findByTravelIdAndUserId(travelId, userId)
+                .orElseThrow(() -> new UserNotFound("Пользователь не найден в поездке"));
+
+        if (member.getRole() == MemberRole.OWNER) {
+            throw new OwnerRemovalNotAllowedException("Владелец не может покинуть поездку");
+        }
+
+        travelMemberRepository.delete(member);
     }
 
 }
