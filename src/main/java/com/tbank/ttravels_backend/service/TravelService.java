@@ -165,24 +165,34 @@ public class TravelService {
     }
 
     @Transactional
-    public void inviteMember(Long travelId, String phone) {
+    public void inviteMembers(Long travelId, List<String> phones) {
+        if (phones == null || phones.isEmpty()) {
+            return;
+        }
+
         Travel travel = travelRepository.findById(travelId)
                 .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
 
-        User invitedUser = userRepository.findByPhone(phone)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+        phones.stream()
+                .map(String::trim)
+                .distinct()
+                .forEach(phone -> {
+                    User invitedUser = userRepository.findByPhone(phone)
+                            .orElseThrow(() -> new UserNotFoundException("Пользователь %s не найден".formatted(phone)));
 
-        if (travelMemberRepository.existsByTravelIdAndUserId(travelId, invitedUser.getId())) {
-            throw new ConflictStateException("Пользователь уже приглашён или является участником поездки");
-        }
+                    if (travelMemberRepository.existsByTravelIdAndUserId(travelId, invitedUser.getId())) {
+                        throw new ConflictStateException("Пользователь %s уже приглашён или является участником поездки"
+                                .formatted(phone));
+                    }
 
-        TravelMember newMember = TravelMember.builder()
-                .travel(travel)
-                .user(invitedUser)
-                .status(MemberStatus.INVITED)
-                .role(MemberRole.MEMBER)
-                .build();
-        travelMemberRepository.save(newMember);
+                    TravelMember newMember = TravelMember.builder()
+                            .travel(travel)
+                            .user(invitedUser)
+                            .status(MemberStatus.INVITED)
+                            .role(MemberRole.MEMBER)
+                            .build();
+                    travelMemberRepository.save(newMember);
+                });
     }
 
     @Transactional

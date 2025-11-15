@@ -76,7 +76,7 @@ public class TravelController {
     public void inviteMember(@PathVariable Long travelId,
                              @Valid @RequestBody InviteRequest request,
                              @AuthenticationPrincipal UserPrincipal principal) {
-        travelService.inviteMember(travelId, request.getPhone());
+        travelService.inviteMembers(travelId, request.getPhones());
     }
 
     @GetMapping("/invites")
