@@ -4,6 +4,7 @@ import com.tbank.ttravels_backend.entity.TravelMember;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TravelMemberRepository extends JpaRepository<TravelMember, Long> {
 
@@ -12,4 +13,6 @@ public interface TravelMemberRepository extends JpaRepository<TravelMember, Long
     List<TravelMember> findByUserId(Long userId);
 
     boolean existsByUserIdAndTravelId(Long userId, Long travelId);
+
+    Optional<TravelMember> findByUserIdAndTravelId(Long userId, Long travelId);
 }

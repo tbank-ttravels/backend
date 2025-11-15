@@ -47,7 +47,7 @@ public class Expense {
     @OneToMany(cascade = CascadeType.ALL,
             mappedBy = "expense",
             orphanRemoval = true)
-    private Set<MemberExpense> memberExpenses = new HashSet<>();
+    private Set<MemberExpense> memberExpenses = new HashSet<>(); // TODO платящший является участником!
 
     @Setter
     @ManyToOne(fetch = FetchType.LAZY)
