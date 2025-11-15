@@ -16,6 +16,6 @@ public class InviteRequest {
     @NotEmpty(message = "Укажите хотя бы один номер телефона!")
     private List<
             @NotNull(message = "Номер телефона не может быть null")
-            @Pattern(regexp = "^\\+?7\\d{10}$", message = "Неверный номер!")
+            @Pattern(regexp = "^\\+?7\\d{10}$", message = "Некорректный номер!")
                     String> phones;
 }
