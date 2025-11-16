@@ -30,7 +30,7 @@ public class TransferService {
         CreateTransferValidator.validateCreate(request);
 
         Travel travel = travelRepository.findById(request.getTravelId())
-                .orElseThrow(() -> new TravelNotFound("Поездка не найдена"));
+                .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
 
         User sender = userRepository.findById(request.getSenderId())
                 .orElseThrow(() -> new UserNotFound("Отправитель не найден"));
