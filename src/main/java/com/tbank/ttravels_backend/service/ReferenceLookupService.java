@@ -10,6 +10,8 @@ import com.tbank.ttravels_backend.repository.TravelRepository;
 import com.tbank.ttravels_backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
+
 @Service
 public class ReferenceLookupService {
 
@@ -32,8 +34,8 @@ public class ReferenceLookupService {
     public User findUserInTravel(Long userId, Long travelId) {
 
         // TODO нужны ли эти запросы?
-        checkUserExists(userId);
-        checkTravelExists(travelId);
+//        checkUserExists(userId);
+//        checkTravelExists(travelId);
 
         return travelMemberRepository.findByUserIdAndTravelId(userId, travelId)
                 .orElseThrow(() ->
@@ -43,8 +45,9 @@ public class ReferenceLookupService {
 
     public void checkUserInTravel(Long userId, Long travelId){
 
-        checkUserExists(userId);
-        checkTravelExists(travelId);
+        // TODO надо ли
+//        checkUserExists(userId);
+//        checkTravelExists(travelId);
 
         if(!travelMemberRepository.existsByUserIdAndTravelId(userId, travelId))
             throw new UserNotFoundInTravelException(userId, travelId);
@@ -70,5 +73,18 @@ public class ReferenceLookupService {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() ->
                         new CategoryNotFoundException(categoryId));
+    }
+
+    public void validateAllUsersInTravel(Long travelId, Set<Long> participantUserIds) {
+
+        if (participantUserIds == null) return;
+
+        participantUserIds.forEach(userId -> checkUserInTravel(userId, travelId));
+    }
+
+    public void checkInitiatorAccessToTravel(Long initiatorId, Long travelId) {
+        if (!travelMemberRepository.existsByUserIdAndTravelId(initiatorId, travelId)) {
+            throw new InitiatorNoAccessException(travelId);
+        }
     }
 }

@@ -18,7 +18,9 @@ public class ControllerExceptionHandler {
             TravelNotFoundException.class,
             UserNotFoundInTravelException.class,
             UserNotFoundException.class,
-            EmptyUpdateRequestException.class
+            EmptyUpdateRequestException.class,
+            InitiatorNoAccessException.class,
+            PayerNotInParticipantsException.class
     })
     public ResponseEntity<Object> handleNotFound(RuntimeException ex) {
 
@@ -34,6 +36,7 @@ public class ControllerExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createErrorBody(ex));
     }
+
 
     private Map<String, Object> createErrorBody(RuntimeException ex) {
 

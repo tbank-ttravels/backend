@@ -9,6 +9,7 @@ import com.tbank.ttravels_backend.service.ExpenseService;
 import com.tbank.ttravels_backend.service.ReferenceLookupService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,11 +27,12 @@ public class ExpenseController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    // TODO @PreAuthorize("@travelSecurity.isMember(#travelId, user.id)")
     public ExpenseResponseDTO createExpense(@RequestBody @Valid ExpenseRequestDTO expenseRequestDTO,
                                             @PathVariable Long travelId,
                                             @AuthenticationPrincipal UserPrincipal user) {
 
-        return expenseService.createExpense(expenseRequestDTO, travelId, user.getId());
+        return expenseService.createExpense(expenseRequestDTO, travelId);
     }
 
 
