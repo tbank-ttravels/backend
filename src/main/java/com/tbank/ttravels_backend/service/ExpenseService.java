@@ -41,6 +41,7 @@ public class ExpenseService {
 
 
     // TODO более одного плательщика
+    // TODO дублирование в мапе участников
 
     /**
      * Создаёт новую трату в указанной поездке
@@ -69,10 +70,14 @@ public class ExpenseService {
         Travel travel = referenceLookupService.findTravel(travelId);
         User payer = referenceLookupService.findUserInTravel(payerId, travelId);
 
+        checkPayerIncludeExpense(payerId, expenseRequestDTO.getParticipantShares());
+
+        BigDecimal sum = calculateSum(expenseRequestDTO.getParticipantShares());
+
         Expense expense = Expense.create(
                 expenseRequestDTO.getName(),
                 expenseRequestDTO.getDescription(),
-                expenseRequestDTO.getSum(),
+                sum,
                 expenseRequestDTO.getDate(),
                 category,
                 payer,
@@ -88,50 +93,58 @@ public class ExpenseService {
         return expenseDtoMapper.createExpenseResponseDTO(expense);
     }
 
+    private void checkPayerIncludeExpense(Long payerId, Map<Long, BigDecimal> participantShares) {
+        if (participantShares == null || !participantShares.containsKey(payerId)) {
+            throw new PayerNotInParticipantsException(payerId);
+        }
+    }
 
-    /**
+    private BigDecimal calculateSum(Map<Long, BigDecimal> participantShares) {
+
+        BigDecimal sum = BigDecimal.ZERO;
+
+        for (Map.Entry<Long, BigDecimal> entry : participantShares.entrySet()) {
+            sum = sum.add(checkShare(entry.getValue(), entry.getKey()));
+        }
+
+        return sum;
+    }
+
+
+
+     /**
      * Распределяет финансовые доли среди участников траты.
      * <p>
      * Особенности работы:
-     * - Плательщик (payer) всегда сохраняет свою долю, которая вычисляется как разница
-     * между суммой траты и суммой долей остальных участников.
-     * - Доли участников должны быть положительными и не превышать сумму траты.
-     * - Доля плательщика может быть рассчитана как остаток, и если она <= 0, выбрасывается {@link PayerShareInvalidException}.
+     * - Все доли в participantShares должны быть положительными
+     * - Плательщик получает положительную долю, участники - отрицательную
+     * - Сумма траты вычисляется как сумма всех долей из participantShares
      *
      * @param expense           сущность траты, для которой распределяются доли
      * @param participantShares мапа участников и их долей (userId:сумма), исключая плательщика
      * @param payerId           идентификатор плательщика, его доля рассчитывается автоматически
-     * @throws InvalidParticipantShareException если доля участника некорректна
-     * @throws PayerShareInvalidException       если доля плательщика получается меньше или равна нулю
      */
     private void distributeExpenseShares(Expense expense,
                                          Map<Long, BigDecimal> participantShares,
                                          Long payerId) {
 
-        BigDecimal sharePayer = expense.getSum();
-
         if (participantShares != null) {
             for (Map.Entry<Long, BigDecimal> entry : participantShares.entrySet()) {
 
-                if (!entry.getKey().equals(payerId)) {
+                User participant = referenceLookupService.findUserInTravel(entry.getKey(), expense.getTravel().getId());
 
-                    User participant = referenceLookupService.findUserInTravel(entry.getKey(), expense.getTravel().getId());
-                    BigDecimal share = entry.getValue();
+                MemberExpense memberExpense;
 
-                    checkShare(share, expense.getSum(), entry.getKey());
-
-                    MemberExpense memberExpense = MemberExpense.create(participant, entry.getValue().negate());
-                    expense.addMemberExpense(memberExpense);
-                    sharePayer = sharePayer.subtract(entry.getValue());
+                if (participant.getId().equals(payerId)) {
+                    memberExpense = MemberExpense.create(participant, entry.getValue());
+                } else {
+                    memberExpense = MemberExpense.create(participant, entry.getValue().negate());
                 }
+
+                expense.addMemberExpense(memberExpense);
             }
 
-            if (sharePayer.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new PayerShareInvalidException(payerId);
-            }
         }
-
-        expense.addMemberExpense(MemberExpense.create(expense.getPayer(), sharePayer));
     }
 
 
@@ -143,19 +156,18 @@ public class ExpenseService {
      * - положительной
      * - не больше суммы самой траты
      *
-     * @param share      доля участника
-     * @param expenseSum общая сумма траты
-     * @param userId     идентификатор участника, для которого проверяется доля
+     * @param share  доля участника
+     * @param userId идентификатор участника, для которого проверяется доля
      * @throws InvalidParticipantShareException если доля некорректна
      */
-    private void checkShare(BigDecimal share, BigDecimal expenseSum, Long userId) {
+    private BigDecimal checkShare(BigDecimal share, Long userId) {
 
         if (share == null)
             throw new InvalidParticipantShareException(userId, "Доля участника не может быть пустой");
         if (share.signum() <= 0)
             throw new InvalidParticipantShareException(userId, "Доля участника должна быть положительной");
-        if (share.compareTo(expenseSum) > 0)
-            throw new InvalidParticipantShareException(userId, "Доля участника больше суммы расхода");
+
+        return share;
     }
 
 
@@ -198,6 +210,9 @@ public class ExpenseService {
                 .orElseThrow(() -> new ExpenseNotFoundInTravelException(expenseId, travelId));
     }
 
+    // TODO полностью удалять старый список участников или редактировать сущетсвующий?
+    //  Тогда удаление из траты и добавление делать отдельными эндпоинтами?
+
     /**
      * Обновляет существующую трату в поездке.
      * <p>
@@ -222,7 +237,6 @@ public class ExpenseService {
     public ExpenseResponseDTO updateExpense(Long travelId, Long expenseId,
                                             ExpenseUpdateRequestDTO expenseUpdateRequestDTO, Long userId) {
 
-        // TODO сделать исключение
         // Если DTO пустое, обновлять нечего
         if (!this.hasAnyField(expenseUpdateRequestDTO)) {
             throw new EmptyUpdateRequestException();

@@ -20,8 +20,8 @@ public class ExpenseRequestDTO {
 
     private String description;
 
-    @Positive(message = "Должно быть > 0")
-    private BigDecimal sum;
+//    @Positive(message = "Должно быть > 0")
+//    private BigDecimal sum; // TODO надо ли передавть
 
     private OffsetDateTime date = OffsetDateTime.now();
 
