@@ -14,7 +14,6 @@ import java.util.Set;
  * @param date         Дата расхода
  * @param categoryId   ID категории
  * @param categoryName Название категории
- * @param payer        Имя Фамилия Плательщик
  * @param participants Список участников
  */
 
@@ -26,7 +25,6 @@ public record ExpenseResponseDTO(Long id,
                                  OffsetDateTime date,
                                  Long categoryId,
                                  String categoryName,
-                                 String payer,
                                  Set<MemberExpenseResponseDTO> participants) {
 
 }
