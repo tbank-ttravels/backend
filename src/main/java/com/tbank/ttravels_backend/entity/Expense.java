@@ -93,10 +93,10 @@ public class Expense {
     public void setSum(BigDecimal sum) {
 
         if (sum == null)
-            throw new IllegalArgumentException("Expense creation failed: sum must not be null");
+            throw new IllegalArgumentException("Не удалось создать расход: сумма не может быть null");
 
         if (sum.compareTo(BigDecimal.ZERO) <= 0)
-            throw new IllegalArgumentException("Expense creation failed: sum must be greater than zero");
+            throw new IllegalArgumentException("Не удалось создать расход: сумма должна быть больше нуля");
 
         this.sum = sum;
     }
@@ -104,7 +104,7 @@ public class Expense {
     public void setPayer(User payer) {
 
         if (payer == null)
-            throw new IllegalArgumentException("Expense creation failed: payer must not be null");
+            throw new IllegalArgumentException("Не удалось создать расход: плательщик не может быть null");
 
         this.payer = payer;
     }
@@ -112,7 +112,7 @@ public class Expense {
     public void setTravel(Travel travel) {
 
         if (travel == null)
-            throw new IllegalArgumentException("Expense creation failed: travel must not be null");
+            throw new IllegalArgumentException("Не удалось создать расход: поездка не может быть null");
 
         this.travel = travel;
     }

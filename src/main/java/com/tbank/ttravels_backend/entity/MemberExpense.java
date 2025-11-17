@@ -3,7 +3,6 @@ package com.tbank.ttravels_backend.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 
@@ -45,7 +44,7 @@ public class MemberExpense {
     public void setParticipant(User participant) {
 
         if (participant == null)
-            throw new IllegalArgumentException("MemberExpense creation failed: participant must not be null");
+            throw new IllegalArgumentException("Не удалось создать участника расхода: участник не может быть null");
 
         this.participant = participant;
     }
@@ -53,10 +52,10 @@ public class MemberExpense {
     public void setShare(BigDecimal share) {
 
         if (share == null)
-            throw new IllegalArgumentException("MemberExpense creation failed: share must not be null");
+            throw new IllegalArgumentException("Не удалось создать участника расхода: доля не может быть null");
 
         if (share.compareTo(BigDecimal.ZERO) == 0)
-            throw new IllegalArgumentException("MemberExpense creation failed: share must not be zero");
+            throw new IllegalArgumentException("Не удалось создать участника расхода: доля не может быть нулевой");
 
         this.share = share;
     }
