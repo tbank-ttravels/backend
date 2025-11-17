@@ -81,10 +81,4 @@ public class ReferenceLookupService {
 
         participantUserIds.forEach(userId -> checkUserInTravel(userId, travelId));
     }
-
-    public void checkInitiatorAccessToTravel(Long initiatorId, Long travelId) {
-        if (!travelMemberRepository.existsByUserIdAndTravelId(initiatorId, travelId)) {
-            throw new InitiatorNoAccessException(travelId);
-        }
-    }
 }

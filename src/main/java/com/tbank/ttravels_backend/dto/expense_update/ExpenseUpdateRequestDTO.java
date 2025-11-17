@@ -11,8 +11,7 @@ public record ExpenseUpdateRequestDTO(
         String description,
         OffsetDateTime date,
         Long categoryId,
-        // Опасные поля, необходимо передавать вместе (либо оба, либо ни один)
-        BigDecimal sum,
+        Long payerId,
         Map<Long, BigDecimal> participantShares) {
 
 }

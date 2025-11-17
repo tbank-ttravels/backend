@@ -16,6 +16,7 @@ public class ExpenseDtoMapper {
 
         return ExpenseResponseDTO.builder()
                 .id(expense.getId())
+                .payerId(expense.getPayer().getId())
                 .categoryId(expense.getCategory().getId())
                 .categoryName(expense.getCategory().getName())
                 .sum(expense.getSum())
@@ -43,7 +44,7 @@ public class ExpenseDtoMapper {
         return MemberExpenseResponseDTO.builder()
                 .surname(memberExpense.getParticipant().getSurname())
                 .userId(memberExpense.getParticipant().getId())
-                .share(memberExpense.getShare())
+                .share(memberExpense.getShare().abs())
                 .name(memberExpense.getParticipant().getName())
                 .build();
     }

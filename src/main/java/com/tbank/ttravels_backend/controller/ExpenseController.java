@@ -39,21 +39,23 @@ public class ExpenseController {
     // TODO является ли участником поездки?
     @DeleteMapping("/{expenseId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    // TODO @PreAuthorize("@travelSecurity.isMember(#travelId, user.id)")
     public void deleteExpense(@PathVariable Long travelId,
                               @PathVariable Long expenseId,
                               @AuthenticationPrincipal UserPrincipal user) {
 
-        expenseService.deleteExpense(travelId, expenseId, user.getId());
+        expenseService.deleteExpense(travelId, expenseId);
     }
 
     @PatchMapping("/{expenseId}")
     @ResponseStatus(HttpStatus.OK)
+    // TODO @PreAuthorize("@travelSecurity.isMember(#travelId, user.id)")
     public ExpenseResponseDTO updateExpense(@PathVariable Long travelId,
                                             @PathVariable Long expenseId,
                                             @RequestBody ExpenseUpdateRequestDTO expenseUpdateRequestDTO,
                                             @AuthenticationPrincipal UserPrincipal user) {
 
-        return expenseService.updateExpense(travelId, expenseId, expenseUpdateRequestDTO, user.getId());
+        return expenseService.updateExpense(travelId, expenseId, expenseUpdateRequestDTO);
     }
 
 }

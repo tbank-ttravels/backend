@@ -9,6 +9,7 @@ import java.util.Set;
 /**
  * @param id           ID траты
  * @param name         Название
+ * @param payerId      ID платящего
  * @param description  Описание
  * @param sum          Сумма
  * @param date         Дата расхода
@@ -19,6 +20,7 @@ import java.util.Set;
 
 @Builder
 public record ExpenseResponseDTO(Long id,
+                                 Long payerId,
                                  String name,
                                  String description,
                                  BigDecimal sum,

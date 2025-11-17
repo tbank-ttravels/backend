@@ -13,8 +13,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 // TODO батч операции
@@ -28,9 +30,9 @@ public class ExpenseService {
     /**
      * Конструктор сервиса ExpenseService.
      *
-     * @param expenseRepository репозиторий для работы с сущностью Expense
+     * @param expenseRepository      репозиторий для работы с сущностью Expense
      * @param referenceLookupService сервис для проверки участия пользователей, поездок и категорий
-     * @param expenseDtoMapper  маппер для преобразования сущности Expense в DTO
+     * @param expenseDtoMapper       маппер для преобразования сущности Expense в DTO
      */
     public ExpenseService(ExpenseRepository expenseRepository,
                           ReferenceLookupService referenceLookupService,
@@ -82,7 +84,7 @@ public class ExpenseService {
 
         User payer = referenceLookupService.findUserInTravel(expenseRequestDTO.getPayerId(), travelId);
 
-        BigDecimal sum = calculateSum(expenseRequestDTO.getParticipantShares());
+        BigDecimal sum = calculateSum(expenseRequestDTO.getParticipantShares().values());
 
         Expense expense = Expense.create(
                 expenseRequestDTO.getName(),
@@ -124,6 +126,8 @@ public class ExpenseService {
         // Есть ли в участниках платящий?
         validatePayerInParticipants(expenseRequestDTO.getPayerId(), expenseRequestDTO.getParticipantShares().keySet());
 
+
+        // Валидация долей
         validateShares(expenseRequestDTO.getParticipantShares());
     }
 
@@ -163,18 +167,12 @@ public class ExpenseService {
     /**
      * Вычисляет сумму траты как сумму всех долей участников.
      *
-     * @param participantShares Map<userId, доля>
      * @return сумма траты
      */
-    private BigDecimal calculateSum(Map<Long, BigDecimal> participantShares) {
+    private BigDecimal calculateSum(Collection<BigDecimal> shares) {
 
-        BigDecimal sum = BigDecimal.ZERO;
-
-        for (Map.Entry<Long, BigDecimal> entry : participantShares.entrySet()) {
-            sum = sum.add(entry.getValue());
-        }
-
-        return sum;
+        return shares.stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
 
@@ -220,13 +218,10 @@ public class ExpenseService {
      *
      * @param travelId  идентификатор поездки
      * @param expenseId идентификатор траты для удаления
-     * @param userId    идентификатор пользователя, инициирующего удаление
      * @throws ExpenseNotFoundInTravelException если трата не найдена в поездке
      * @throws UserNotFoundInTravelException    если пользователь не участвует в поездке
      */
-    public void deleteExpense(Long travelId, Long expenseId, Long userId) {
-
-        referenceLookupService.checkUserInTravel(userId, travelId);
+    public void deleteExpense(Long travelId, Long expenseId) {
 
         Expense expense = this.findExpenseInTravel(expenseId, travelId);
 
@@ -251,35 +246,38 @@ public class ExpenseService {
                 .orElseThrow(() -> new ExpenseNotFoundInTravelException(expenseId, travelId));
     }
 
-    // TODO полностью удалять старый список участников или редактировать сущетсвующий?
-    //  Тогда удаление из траты и добавление делать отдельными эндпоинтами?
 
     /**
-     * Обновляет существующую трату в поездке.
+     * Обновляет существующую трату в указанной поездке.
      * <p>
-     * Особенности:
-     * - Обновляются только поля, переданные в DTO.
-     * - "Безопасные" поля (name, description, category, date) обновляются без пересчета долей участников.
-     * - Финансовые поля (sum и participantShares) можно обновлять только вместе.
-     * - При обновлении финансовых полей пересчитываются доли всех участников, включая плательщика.
+     * Особенности работы:
+     * - Можно обновлять базовую информацию: название, описание, категорию, дату
+     * - Можно обновлять финансовые доли участников (participantShares)
+     * - Можно изменить плательщика (payerId). В этом случае пересчитываются знаки долей:
+     * плательщик — положительная, остальные участники — отрицательные
+     * - Если участники переданы, проверяется, что все они уже существуют в тратах.
+     * Новых участников добавить нельзя — для этого есть отдельный endpoint
+     * - Если DTO пустое (нет полей для обновления), выбрасывается EmptyUpdateRequestException
+     * - Сумма траты пересчитывается как сумма модулей всех долей участников
      *
-     * @param travelId                идентификатор поездки, в которой находится трата
-     * @param expenseId               идентификатор траты для обновления
-     * @param expenseUpdateRequestDTO DTO с новыми значениями полей
-     * @param userId                  идентификатор пользователя, который делает изменение (должен быть участником поездки)
-     * @return DTO с актуальными данными траты после обновления
-     * @throws IllegalArgumentException         если DTO пустое или опасные поля переданы некорректно
-     * @throws ExpenseNotFoundInTravelException если трата не найдена в указанной поездке
-     * @throws UserNotFoundInTravelException    если пользователь не является участником поездки
+     * @param travelId                идентификатор поездки
+     * @param expenseId               идентификатор траты
+     * @param expenseUpdateRequestDTO DTO с данными для обновления
+     * @return DTO с обновлёнными данными траты
      * @throws EmptyUpdateRequestException      если DTO пустое
+     * @throws UserNotFoundExpenseException     если передан participantId, которого нет в тратах
+     * @throws InvalidParticipantShareException если доли некорректны
+     * @throws TravelNotFoundException          если поездка не найдена
+     * @throws ExpenseNotFoundInTravelException если трата не найдена
+     * @throws UserNotFoundInTravelException    если новый плательщик не участник поездки
      */
     @Transactional
-    // Обновление траты
     public ExpenseResponseDTO updateExpense(Long travelId, Long expenseId,
-                                            ExpenseUpdateRequestDTO expenseUpdateRequestDTO, Long userId) {
+                                            ExpenseUpdateRequestDTO expenseUpdateRequestDTO) {
 
         // Если DTO пустое, обновлять нечего
         if (!this.hasAnyField(expenseUpdateRequestDTO)) {
+            // TODO корректнее обработать
             throw new EmptyUpdateRequestException();
         }
 
@@ -287,21 +285,68 @@ public class ExpenseService {
         boolean hasShares = expenseUpdateRequestDTO.participantShares() != null
                 && !expenseUpdateRequestDTO.participantShares().isEmpty();
 
-        // Только участник этой поездки может изменять трату
-        referenceLookupService.checkUserInTravel(userId, travelId);
-
         Expense expense = this.findExpenseInTravel(expenseId, travelId);
+
+        // Редактируем участников, если они переданы
+        if (hasShares) {
+
+            validateParticipantSharesForUpdate(
+                    expenseUpdateRequestDTO.participantShares(),
+                    expense);
+
+            updateFinancialFields(
+                    expense,
+                    expenseUpdateRequestDTO.participantShares());
+        }
 
         updateBasicInfo(expense,
                 expenseUpdateRequestDTO.name(), expenseUpdateRequestDTO.description(),
                 expenseUpdateRequestDTO.categoryId(), expenseUpdateRequestDTO.date());
 
-        if (hasShares) {
-            updateFinancialFields(expense,
-                    expenseUpdateRequestDTO.participantShares());
+        // Меняем платящего, если есть
+        if (expenseUpdateRequestDTO.payerId() != null &&
+                !expenseUpdateRequestDTO.payerId().equals(expense.getPayer().getId())) {
+            updatePayer(
+                    expense,
+                    referenceLookupService.findUserInTravel(
+                            expenseUpdateRequestDTO.payerId(),
+                            travelId));
         }
 
+        expenseRepository.save(expense);
+
         return expenseDtoMapper.createExpenseResponseDTO(expense);
+    }
+
+
+    /**
+     * Обновляет плательщика траты.
+     * <p>
+     * Особенности:
+     * - Меняет поле payer в сущности Expense
+     * - Меняет знаки долей участников: новый плательщик получает положительную долю,
+     * остальные участники — отрицательные
+     *
+     * @param expense сущность траты
+     * @param payer   новый плательщик
+     */
+    private void updatePayer(Expense expense, User payer) {
+
+        expense.setPayer(payer);
+
+        Set<MemberExpense> membersExpense = expense.getMemberExpenses();
+
+        membersExpense.forEach((me) ->
+        {
+            Long participantId = me.getParticipant().getId();
+            BigDecimal share = me.getShare().abs();
+
+            if (!participantId.equals(expense.getPayer().getId())) {
+                me.setShare(share.negate());
+            } else {
+                me.setShare(share.abs());
+            }
+        });
     }
 
 
@@ -314,6 +359,7 @@ public class ExpenseService {
     private boolean hasAnyField(ExpenseUpdateRequestDTO dto) {
         return (dto.participantShares() != null && !dto.participantShares().isEmpty()) ||
                 dto.date() != null ||
+                dto.payerId() != null ||
                 dto.description() != null ||
                 dto.categoryId() != null ||
                 dto.name() != null;
@@ -354,26 +400,79 @@ public class ExpenseService {
 
 
     /**
-     * Обновляет финансовые поля траты, включая сумму и доли участников.
+     * Обновляет финансовые доли существующих участников траты.
      * <p>
      * Особенности:
-     * - Нельзя менять плательщика (payer) — его доля сохраняется.
-     * - Все существующие участники (MemberExpense) очищаются и пересоздаются
-     * согласно новым долям из DTO.
-     * - Выполняется проверка валидности долей участников.
+     * - Только существующие участники могут быть обновлены
+     * - Доля плательщика всегда положительная, доли остальных участников отрицательные
+     * - После обновления пересчитывается сумма траты как сумма модулей всех долей
      *
-     * @param expense           сущность траты, которую нужно обновить
-     * @param participantShares новые участники
-     * @throws InvalidParticipantShareException если доля участника некорректна
-     * @throws PayerShareInvalidException       если доля плательщика получается меньше или равна нулю
+     * @param expense           сущность траты
+     * @param participantShares новые значения долей для существующих участников
      */
     private void updateFinancialFields(Expense expense,
                                        Map<Long, BigDecimal> participantShares) {
 
-        // TODO НЕЛЬЗЯ МЕНЯТЬ ТОГО КТО ПЛАТИЛ
+        Set<MemberExpense> membersExpense = expense.getMemberExpenses();
 
-        expense.getMemberExpenses().clear();
 
-        this.distributeExpenseShares(expense, participantShares, expense.getPayer().getId());
+        membersExpense.forEach(me -> {
+            Long participantId = me.getParticipant().getId();
+            if (participantShares.containsKey(participantId)) {
+                BigDecimal newShare = participantShares.get(participantId);
+                me.setShare(!participantId.equals(expense.getPayer().getId())
+                        ? newShare.negate()
+                        : newShare);
+            }
+        });
+
+        expense.setSum(calculateSum(expense.getMemberExpenses().stream()
+                .map(MemberExpense::getShare)
+                .map(BigDecimal::abs)
+                .toList()));
+    }
+
+
+    /**
+     * Валидирует переданные доли участников при обновлении траты.
+     * <p>
+     * Правила:
+     * - Если participantShares не переданы или пусты — проверка пропускается (ничего не обновляем).
+     * - Каждый переданный пользователь должен уже существовать в текущей трате.
+     * - Каждая доля должна быть валидна (не null, > 0).
+     *
+     * @param participantShares новые доли участников, переданные для обновления
+     * @param expense           текущая сущность траты
+     * @throws UserNotFoundExpenseException     если пытаются обновить пользователя, не входящего в трату
+     * @throws InvalidParticipantShareException если переданные доли некорректны
+     */
+    private void validateParticipantSharesForUpdate(Map<Long, BigDecimal> participantShares, Expense expense) {
+
+        if (participantShares != null && !participantShares.isEmpty()) {
+
+            participantShares.keySet().forEach(userId -> checkUserInExpense(expense, userId));
+            validateShares(participantShares);
+        }
+    }
+
+    /**
+     * Проверяет, что пользователь с указанным userId участвует в данной трате.
+     * <p>
+     * Метод предварительно кэширует IDs всех участников траты для оптимизации проверки.
+     *
+     * @param expense текущая трата
+     * @param userId  идентификатор пользователя, которого пытаются обновить
+     * @throws UserNotFoundExpenseException если пользователь отсутствует среди участников траты
+     */
+    private void checkUserInExpense(Expense expense, Long userId) {
+
+        // Кэширую ID
+        Set<Long> membersExpense = expense.getMemberExpenses().stream()
+                .map(me -> me.getParticipant().getId())
+                .collect(Collectors.toSet());
+
+        if (!membersExpense.contains(userId)) {
+            throw new UserNotFoundExpenseException(userId, expense.getName());
+        }
     }
 }
