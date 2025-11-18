@@ -73,7 +73,7 @@ public class AccountService {
 
     public AccountResponse getCurrentUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+                .orElseThrow(() -> new UserNotFoundException(userId));
         return new AccountResponse(user.getPhone(), user.getName(), user.getSurname());
     }
 }

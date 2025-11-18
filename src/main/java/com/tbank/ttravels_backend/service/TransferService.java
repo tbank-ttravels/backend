@@ -1,15 +1,20 @@
 package com.tbank.ttravels_backend.service;
 
-import com.tbank.ttravels_backend.dto.transfer.*;
+import com.tbank.ttravels_backend.dto.transfer.CreateTransferRequest;
+import com.tbank.ttravels_backend.dto.transfer.EditTransferRequest;
+import com.tbank.ttravels_backend.dto.transfer.TransferResponse;
+import com.tbank.ttravels_backend.dto.transfer.TransfersListResponse;
+import com.tbank.ttravels_backend.dto.transfer.validator.CreateTransferValidator;
+import com.tbank.ttravels_backend.dto.transfer.validator.EditTransferValidator;
 import com.tbank.ttravels_backend.entity.Transfer;
 import com.tbank.ttravels_backend.entity.Travel;
 import com.tbank.ttravels_backend.entity.User;
-import com.tbank.ttravels_backend.exception.*;
+import com.tbank.ttravels_backend.exception.TransferNotFound;
+import com.tbank.ttravels_backend.exception.TravelNotFoundException;
+import com.tbank.ttravels_backend.exception.UserNotFoundException;
 import com.tbank.ttravels_backend.repository.TransferRepository;
 import com.tbank.ttravels_backend.repository.TravelRepository;
 import com.tbank.ttravels_backend.repository.UserRepository;
-import com.tbank.ttravels_backend.dto.transfer.validator.CreateTransferValidator;
-import com.tbank.ttravels_backend.dto.transfer.validator.EditTransferValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,13 +35,13 @@ public class TransferService {
         CreateTransferValidator.validateCreate(request);
 
         Travel travel = travelRepository.findById(request.getTravelId())
-                .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
+                .orElseThrow(() -> new TravelNotFoundException(request.getTravelId()));
 
         User sender = userRepository.findById(request.getSenderId())
-                .orElseThrow(() -> new UserNotFound("Отправитель не найден"));
+                .orElseThrow(() -> new UserNotFoundException(request.getSenderId()));
 
         User recipient = userRepository.findById(request.getRecipientId())
-                .orElseThrow(() -> new UserNotFound("Получатель не найден"));
+                .orElseThrow(() -> new UserNotFoundException(request.getRecipientId()));
 
         Transfer transfer = Transfer.builder()
                 .travel(travel)

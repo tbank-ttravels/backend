@@ -17,6 +17,35 @@ import java.util.Map;
 @ControllerAdvice
 public class RestExceptionHandler {
 
+    @ExceptionHandler({
+            CategoryNotFoundException.class,
+            ExpenseNotFoundInTravelException.class,
+            TravelNotFoundException.class,
+            UserNotFoundInTravelException.class,
+            UserNotFoundException.class,
+            EmptyUpdateRequestException.class,
+            InitiatorNoAccessException.class,
+            PayerNotInParticipantsException.class,
+            CannotRemovePayerFromExpenseException.class,
+            EmptyParticipantsListException.class,
+            MemberExpenseNotFoundException.class,
+            UsersNotFoundInExpenseException.class,
+            DuplicateParticipantException.class
+    })
+    public ResponseEntity<Object> handleNotFound(RuntimeException ex) {
+
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler({
+            InvalidParticipantShareException.class,
+            PayerShareInvalidException.class
+    })
+    public ResponseEntity<Object> handle(RuntimeException ex) {
+
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<Object> handleUserExists(UserAlreadyExistsException ex) {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
@@ -75,16 +104,6 @@ public class RestExceptionHandler {
     @ExceptionHandler(ConflictStateException.class)
     public ResponseEntity<Object> handleConflictState(ConflictStateException ex) {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
-    }
-
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Object> handleUserNotFound(UserNotFoundException ex) {
-        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
-    }
-
-    @ExceptionHandler(TravelNotFoundException.class)
-    public ResponseEntity<Object> handleTravelNotFound(TravelNotFoundException ex) {
-        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
