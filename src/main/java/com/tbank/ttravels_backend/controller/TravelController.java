@@ -11,7 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/travels")
+@RequestMapping("/api/travels")
 @RequiredArgsConstructor
 public class TravelController {
     private final TravelService travelService;

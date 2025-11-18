@@ -1,7 +1,6 @@
 package com.tbank.ttravels_backend.factory;
 
 import com.tbank.ttravels_backend.dto.travel.CreateTravelRequest;
-import com.tbank.ttravels_backend.dto.travel.EditTravelRequest;
 import com.tbank.ttravels_backend.entity.Travel;
 import com.tbank.ttravels_backend.entity.TravelMember;
 import com.tbank.ttravels_backend.entity.User;
@@ -40,20 +39,5 @@ public class TravelFactory {
                 .status(MemberStatus.INVITED)
                 .role(MemberRole.MEMBER)
                 .build();
-    }
-
-    public void applyUpdates(Travel travel, EditTravelRequest request) {
-        if (request.getName() != null) {
-            travel.setName(request.getName());
-        }
-        if (request.getDescription() != null) {
-            travel.setDescription(request.getDescription());
-        }
-        if (request.getStartDate() != null) {
-            travel.setStartDate(request.getStartDate());
-        }
-        if (request.getEndDate() != null) {
-            travel.setEndDate(request.getEndDate());
-        }
     }
 }

@@ -64,7 +64,7 @@ public class TravelService {
         OffsetDateTime updatedEnd = request.getEndDate() != null ? request.getEndDate() : travel.getEndDate();
         validateDateRange(updatedStart, updatedEnd);
 
-        travelFactory.applyUpdates(travel, request);
+        applyUpdates(travel, request);
         Travel updated = travelRepository.save(travel);
 
         return travelMapper.toTravelResponse(updated);
@@ -156,6 +156,22 @@ public class TravelService {
 
         travelMemberRepository.delete(member);
     }
+
+    private void applyUpdates(Travel travel, EditTravelRequest request) {
+        if (request.getName() != null) {
+            travel.setName(request.getName());
+        }
+        if (request.getDescription() != null) {
+            travel.setDescription(request.getDescription());
+        }
+        if (request.getStartDate() != null) {
+            travel.setStartDate(request.getStartDate());
+        }
+        if (request.getEndDate() != null) {
+            travel.setEndDate(request.getEndDate());
+        }
+    }
+
 
     private Travel findTravelOrThrow(Long travelId) {
         return travelRepository.findById(travelId)
