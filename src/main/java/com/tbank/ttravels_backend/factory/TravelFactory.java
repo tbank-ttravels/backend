@@ -7,12 +7,14 @@ import com.tbank.ttravels_backend.entity.User;
 import com.tbank.ttravels_backend.enums.MemberRole;
 import com.tbank.ttravels_backend.enums.MemberStatus;
 import com.tbank.ttravels_backend.enums.TravelStatus;
-import org.springframework.stereotype.Component;
 
-@Component
-public class TravelFactory {
+public final class TravelFactory {
 
-    public Travel createTravel(CreateTravelRequest request, User owner) {
+    private TravelFactory() {
+        throw new UnsupportedOperationException();
+    }
+
+    public static Travel createTravel(CreateTravelRequest request, User owner) {
         return Travel.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -23,7 +25,7 @@ public class TravelFactory {
                 .build();
     }
 
-    public TravelMember ownerMembership(Travel travel, User owner) {
+    public static TravelMember ownerMembership(Travel travel, User owner) {
         return TravelMember.builder()
                 .travel(travel)
                 .user(owner)
@@ -32,7 +34,7 @@ public class TravelFactory {
                 .build();
     }
 
-    public TravelMember invitedMember(Travel travel, User invitedUser) {
+    public static TravelMember invitedMember(Travel travel, User invitedUser) {
         return TravelMember.builder()
                 .travel(travel)
                 .user(invitedUser)

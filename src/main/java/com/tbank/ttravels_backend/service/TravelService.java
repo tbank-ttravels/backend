@@ -27,7 +27,6 @@ public class TravelService {
     private final UserRepository userRepository;
     private final TravelRepository travelRepository;
     private final TravelMemberRepository travelMemberRepository;
-    private final TravelFactory travelFactory;
     private final TravelMapper travelMapper;
 
     @Transactional
@@ -35,8 +34,8 @@ public class TravelService {
         User owner = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        Travel travel = travelRepository.save(travelFactory.createTravel(request, owner));
-        travelMemberRepository.save(travelFactory.ownerMembership(travel, owner));
+        Travel travel = travelRepository.save(TravelFactory.createTravel(request, owner));
+        travelMemberRepository.save(TravelFactory.ownerMembership(travel, owner));
 
         return travelMapper.toTravelResponse(travel);
     }
@@ -52,13 +51,13 @@ public class TravelService {
 
     @Transactional
     public TravelResponse getTravel(Long travelId) {
-        Travel travel = findTravelOrThrow(travelId);
+        Travel travel = findTravel(travelId);
         return travelMapper.toTravelResponse(travel);
     }
 
     @Transactional
     public TravelResponse editTravel(Long travelId, EditTravelRequest request) {
-        Travel travel = findTravelOrThrow(travelId);
+        Travel travel = findTravel(travelId);
 
         OffsetDateTime updatedStart = request.getStartDate() != null ? request.getStartDate() : travel.getStartDate();
         OffsetDateTime updatedEnd = request.getEndDate() != null ? request.getEndDate() : travel.getEndDate();
@@ -72,7 +71,7 @@ public class TravelService {
 
     @Transactional
     public void closeTravel(Long travelId) {
-        Travel travel = findTravelOrThrow(travelId);
+        Travel travel = findTravel(travelId);
         if (travel.getStatus() == TravelStatus.CLOSED) {
             throw new ConflictStateException("Поездка уже закрыта");
         }
@@ -82,7 +81,7 @@ public class TravelService {
 
     @Transactional
     public void reopenTravel(Long travelId) {
-        Travel travel = findTravelOrThrow(travelId);
+        Travel travel = findTravel(travelId);
         if (travel.getStatus() == TravelStatus.ACTIVE) {
             throw new ConflictStateException("Поездка уже открыта");
         }
@@ -92,7 +91,7 @@ public class TravelService {
 
     @Transactional
     public void deleteTravel(Long travelId) {
-        Travel travel = findTravelOrThrow(travelId);
+        Travel travel = findTravel(travelId);
         travelRepository.delete(travel);
     }
 
@@ -102,7 +101,7 @@ public class TravelService {
             return;
         }
 
-        Travel travel = findTravelOrThrow(travelId);
+        Travel travel = findTravel(travelId);
 
         phones.stream()
                 .map(String::trim)
@@ -173,7 +172,7 @@ public class TravelService {
     }
 
 
-    private Travel findTravelOrThrow(Long travelId) {
+    public Travel findTravel(Long travelId) {
         return travelRepository.findById(travelId)
                 .orElseThrow(() -> new TravelNotFoundException(travelId));
     }
@@ -193,7 +192,7 @@ public class TravelService {
                     .formatted(phone));
         }
 
-        TravelMember newMember = travelFactory.invitedMember(travel, invitedUser);
+        TravelMember newMember = TravelFactory.invitedMember(travel, invitedUser);
         travelMemberRepository.save(newMember);
     }
 }
