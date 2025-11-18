@@ -1,4 +1,4 @@
-package com.tbank.ttravels_backend.security.exception;
+package com.tbank.ttravels_backend.exception;
 
 public class UserAlreadyExistsException extends RuntimeException {
     public UserAlreadyExistsException(String message) {
