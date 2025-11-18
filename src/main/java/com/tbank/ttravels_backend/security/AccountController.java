@@ -1,5 +1,6 @@
 package com.tbank.ttravels_backend.security;
 
+import com.tbank.ttravels_backend.dto.auth.AccountResponse;
 import com.tbank.ttravels_backend.dto.auth.AuthResponse;
 import com.tbank.ttravels_backend.dto.auth.ChangePasswordRequest;
 import com.tbank.ttravels_backend.dto.auth.RefreshOrLogoutRequest;
@@ -33,5 +34,10 @@ public class AccountController {
     @PostMapping("/refresh")
     public AuthResponse refresh(@Valid @RequestBody RefreshOrLogoutRequest request) {
         return accountService.refresh(request);
+    }
+
+    @GetMapping("/me")
+    public AccountResponse getCurrentUser(@AuthenticationPrincipal UserPrincipal principal) {
+        return accountService.getCurrentUser(principal.getId());
     }
 }

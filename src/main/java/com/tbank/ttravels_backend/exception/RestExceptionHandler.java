@@ -72,13 +72,18 @@ public class RestExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, "Endpoint не найден");
     }
 
-    @ExceptionHandler(UserNotFound.class)
-    public ResponseEntity<Object> handleUserNotExist(UserNotFound ex) {
+    @ExceptionHandler(ConflictStateException.class)
+    public ResponseEntity<Object> handleConflictState(ConflictStateException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<Object> handleUserNotFound(UserNotFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    @ExceptionHandler(TravelNotFound.class)
-    public ResponseEntity<Object> handleTravelNotExist(TravelNotFound ex) {
+    @ExceptionHandler(TravelNotFoundException.class)
+    public ResponseEntity<Object> handleTravelNotFound(TravelNotFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
