@@ -1,13 +1,17 @@
 package com.tbank.ttravels_backend.service;
 
 import com.tbank.ttravels_backend.entity.Category;
+import com.tbank.ttravels_backend.entity.MemberExpense;
 import com.tbank.ttravels_backend.entity.Travel;
 import com.tbank.ttravels_backend.entity.User;
-import com.tbank.ttravels_backend.exception.*;
+import com.tbank.ttravels_backend.exception.CategoryNotFoundException;
+import com.tbank.ttravels_backend.exception.MemberExpenseNotFoundException;
+import com.tbank.ttravels_backend.exception.TravelNotFoundException;
+import com.tbank.ttravels_backend.exception.UserNotFoundInTravelException;
 import com.tbank.ttravels_backend.repository.CategoryRepository;
+import com.tbank.ttravels_backend.repository.MemberExpenseRepository;
 import com.tbank.ttravels_backend.repository.TravelMemberRepository;
 import com.tbank.ttravels_backend.repository.TravelRepository;
-import com.tbank.ttravels_backend.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -16,16 +20,19 @@ import java.util.Set;
 public class ReferenceLookupService {
 
     private final CategoryRepository categoryRepository;
-    private final UserRepository userRepository;
+
+    private final MemberExpenseRepository memberExpenseRepository;
     private final TravelRepository travelRepository;
     private final TravelMemberRepository travelMemberRepository;
 
 
 
-    public ReferenceLookupService(CategoryRepository categoryRepository, UserRepository userRepository,
-                                  TravelRepository travelRepository, TravelMemberRepository travelMemberRepository) {
+    public ReferenceLookupService(CategoryRepository categoryRepository,
+                                  MemberExpenseRepository memberExpenseRepository,
+                                  TravelRepository travelRepository,
+                                  TravelMemberRepository travelMemberRepository) {
         this.categoryRepository = categoryRepository;
-        this.userRepository = userRepository;
+        this.memberExpenseRepository = memberExpenseRepository;
         this.travelRepository = travelRepository;
         this.travelMemberRepository = travelMemberRepository;
     }
@@ -58,16 +65,6 @@ public class ReferenceLookupService {
                 .orElseThrow(() -> new TravelNotFoundException(travelId));
     }
 
-    private void checkTravelExists(Long travelId) {
-        if(!travelRepository.existsById(travelId))
-            throw new TravelNotFoundException(travelId);
-    }
-
-    public void checkUserExists(Long userId) {
-        if (!userRepository.existsById(userId))
-            throw new UserNotFoundException(userId);
-    }
-
 
     public Category findCategory(Long categoryId) {
         return categoryRepository.findById(categoryId)
@@ -80,5 +77,10 @@ public class ReferenceLookupService {
         if (participantUserIds == null) return;
 
         participantUserIds.forEach(userId -> checkUserInTravel(userId, travelId));
+    }
+
+    public MemberExpense getMemberExpense(Long userId, Long expenseId){
+        return memberExpenseRepository.findByParticipantIdAndExpenseId(userId, expenseId)
+                .orElseThrow(() -> new MemberExpenseNotFoundException(userId));
     }
 }

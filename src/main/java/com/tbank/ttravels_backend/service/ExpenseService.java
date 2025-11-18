@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -450,29 +451,92 @@ public class ExpenseService {
 
         if (participantShares != null && !participantShares.isEmpty()) {
 
-            participantShares.keySet().forEach(userId -> checkUserInExpense(expense, userId));
+            validateUsersInExpense(expense, participantShares.keySet());
             validateShares(participantShares);
         }
     }
 
+
     /**
-     * Проверяет, что пользователь с указанным userId участвует в данной трате.
+     * Проверяет, что пользователи с переданными ID участвуют в данной трате.
      * <p>
      * Метод предварительно кэширует IDs всех участников траты для оптимизации проверки.
      *
      * @param expense текущая трата
-     * @param userId  идентификатор пользователя, которого пытаются обновить
-     * @throws UserNotFoundExpenseException если пользователь отсутствует среди участников траты
+     * @param usersId идентификаторы пользователей для проверки
+     * @throws UsersNotFoundInExpenseException если один или несколько пользователей отсутствуют среди участников траты
      */
-    private void checkUserInExpense(Expense expense, Long userId) {
+    private void validateUsersInExpense(Expense expense, Collection<Long> usersId) {
 
         // Кэширую ID
-        Set<Long> membersExpense = expense.getMemberExpenses().stream()
+        Set<Long> membersExpenseIds = expense.getMemberExpenses().stream()
                 .map(me -> me.getParticipant().getId())
                 .collect(Collectors.toSet());
 
-        if (!membersExpense.contains(userId)) {
-            throw new UserNotFoundExpenseException(userId, expense.getName());
+        Set<Long> missingUsers = usersId.stream()
+                .filter(id -> !membersExpenseIds.contains(id))
+                .collect(Collectors.toSet());
+
+        if (!missingUsers.isEmpty()) {
+            throw new UsersNotFoundInExpenseException(missingUsers, expense.getName());
         }
+    }
+
+
+
+    /**
+     * Удаляет участников из траты и пересчитывает сумму расхода.
+     * <p>
+     * Метод проверяет:
+     * - непустой список участников для удаления
+     * - что все участники присутствуют в данной трате
+     * - что плательщик не удаляется
+     *
+     * @param travelId      ID путешествия
+     * @param expenseId     ID траты
+     * @param participantsId набор ID участников для удаления
+     * @return актуальный ExpenseResponseDTO после удаления участников
+     * @throws EmptyParticipantsListException если participantsId пустой
+     * @throws CannotRemovePayerFromExpenseException если пытаются удалить плательщика
+     * @throws UsersNotFoundInExpenseException если указанные участники не найдены в тратах
+     */
+    @Transactional
+    public ExpenseResponseDTO deleteParticipantsFromExpense(Long travelId, Long expenseId, Set<Long> participantsId) {
+
+        if(participantsId == null || participantsId.isEmpty()){
+            throw new EmptyParticipantsListException();
+        }
+
+        Expense expense = this.findExpenseInTravel(expenseId, travelId);
+
+        validateUsersInExpense(expense, participantsId);
+
+        if (participantsId.contains(expense.getPayer().getId())) {
+            throw new CannotRemovePayerFromExpenseException(expense.getPayer().getId(), expense.getName());
+        }
+
+        getMemberExpensesForIds(expense, participantsId).forEach(expense::removeMemberExpense);
+
+        expense.setSum(calculateSum(expense.getMemberExpenses()
+                .stream()
+                .map(MemberExpense::getShare)
+                .toList()));
+
+        return expenseDtoMapper.createExpenseResponseDTO(expense);
+    }
+
+
+    /**
+     * Возвращает список MemberExpense для переданных ID участников.
+     *
+     * @param expense       текущая трата
+     * @param participantsId набор ID участников
+     * @return список MemberExpense для удаления
+     */
+    private List<MemberExpense> getMemberExpensesForIds(Expense expense, Set<Long> participantsId) {
+
+        return expense.getMemberExpenses().stream()
+                .filter((me) -> participantsId.contains(me.getParticipant().getId()))
+                .toList();
     }
 }

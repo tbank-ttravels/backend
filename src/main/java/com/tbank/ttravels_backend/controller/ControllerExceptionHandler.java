@@ -20,7 +20,11 @@ public class ControllerExceptionHandler {
             UserNotFoundException.class,
             EmptyUpdateRequestException.class,
             InitiatorNoAccessException.class,
-            PayerNotInParticipantsException.class
+            PayerNotInParticipantsException.class,
+            CannotRemovePayerFromExpenseException.class,
+            EmptyParticipantsListException.class,
+            MemberExpenseNotFoundException.class,
+            UsersNotFoundInExpenseException.class
     })
     public ResponseEntity<Object> handleNotFound(RuntimeException ex) {
 

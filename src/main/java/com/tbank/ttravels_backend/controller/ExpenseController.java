@@ -6,12 +6,12 @@ import com.tbank.ttravels_backend.dto.exspense.ExpenseRequestDTO;
 import com.tbank.ttravels_backend.dto.exspense.ExpenseResponseDTO;
 import com.tbank.ttravels_backend.security.UserPrincipal;
 import com.tbank.ttravels_backend.service.ExpenseService;
-import com.tbank.ttravels_backend.service.ReferenceLookupService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
 
 
 @RestController
@@ -56,6 +56,18 @@ public class ExpenseController {
                                             @AuthenticationPrincipal UserPrincipal user) {
 
         return expenseService.updateExpense(travelId, expenseId, expenseUpdateRequestDTO);
+    }
+
+
+    @DeleteMapping("/{expenseId}/participants")
+    @ResponseStatus(HttpStatus.OK)
+    // TODO @PreAuthorize("@travelSecurity.isMember(#travelId, user.id)")
+    public ExpenseResponseDTO removeParticipantsFromExpense(@PathVariable Long travelId,
+                                                            @PathVariable Long expenseId,
+                                                            @RequestBody Set<Long> participantsId,
+                                                            @AuthenticationPrincipal UserPrincipal user) {
+
+        return expenseService.deleteParticipantsFromExpense(travelId, expenseId, participantsId);
     }
 
 }
