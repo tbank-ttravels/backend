@@ -12,5 +12,4 @@ public class AuthResponse {
     private long accessTokenExpiresIn;
     private String refreshToken;
     private long refreshTokenExpiresIn;
-    private String tokenType = "Bearer";
 }
