@@ -24,7 +24,8 @@ public class ControllerExceptionHandler {
             CannotRemovePayerFromExpenseException.class,
             EmptyParticipantsListException.class,
             MemberExpenseNotFoundException.class,
-            UsersNotFoundInExpenseException.class
+            UsersNotFoundInExpenseException.class,
+            DuplicateParticipantException.class
     })
     public ResponseEntity<Object> handleNotFound(RuntimeException ex) {
 

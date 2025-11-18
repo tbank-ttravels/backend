@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -70,4 +72,16 @@ public class ExpenseController {
         return expenseService.deleteParticipantsFromExpense(travelId, expenseId, participantsId);
     }
 
+
+    // TODO проверка что BigDecimal > 0
+    @PostMapping("/{expenseId}/participants")
+    @ResponseStatus(HttpStatus.OK)
+    // TODO @PreAuthorize("@travelSecurity.isMember(#travelId, user.id)")
+    public ExpenseResponseDTO addParticipantsToExpense(@PathVariable Long travelId,
+                                                       @PathVariable Long expenseId,
+                                                       @RequestBody Map<Long, BigDecimal> participantShares,
+                                                       @AuthenticationPrincipal UserPrincipal user) {
+
+        return expenseService.addParticipantsToExpense(travelId, expenseId, participantShares);
+    }
 }
