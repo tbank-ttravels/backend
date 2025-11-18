@@ -37,7 +37,7 @@ public class TravelController {
         return travelService.getTravel(travelId);
     }
 
-    @PostMapping("/{travelId}/edit")
+    @PatchMapping("/{travelId}")
     @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public TravelResponse editTravel(@PathVariable Long travelId,
@@ -62,7 +62,7 @@ public class TravelController {
         travelService.reopenTravel(travelId);
     }
 
-    @PostMapping("/{travelId}/delete")
+    @DeleteMapping("/{travelId}")
     @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public void deleteTravel(@PathVariable Long travelId,
@@ -101,7 +101,7 @@ public class TravelController {
         return travelService.getTravelMembers(travelId);
     }
 
-    @PostMapping("/{travelId}/kick/{userId}")
+    @DeleteMapping("/{travelId}/kick/{userId}")
     @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public void kickMember(@PathVariable Long travelId,
