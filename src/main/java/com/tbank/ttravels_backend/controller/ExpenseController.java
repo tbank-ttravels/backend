@@ -38,7 +38,6 @@ public class ExpenseController {
     }
 
 
-    // TODO является ли участником поездки?
     @DeleteMapping("/{expenseId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     // TODO @PreAuthorize("@travelSecurity.isMember(#travelId, user.id)")
@@ -73,7 +72,6 @@ public class ExpenseController {
     }
 
 
-    // TODO проверка что BigDecimal > 0
     @PostMapping("/{expenseId}/participants")
     @ResponseStatus(HttpStatus.OK)
     // TODO @PreAuthorize("@travelSecurity.isMember(#travelId, user.id)")
