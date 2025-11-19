@@ -34,6 +34,12 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        /// TODO: временно открыто для тестов, закрыть потом!!!
+                        .requestMatchers("/swagger-ui.html").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/swagger-resources/**").permitAll()
+                        .requestMatchers("/v3/**").permitAll()
+                        /// !!!!!
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/account/refresh").permitAll()
                         .requestMatchers("/error").permitAll()
