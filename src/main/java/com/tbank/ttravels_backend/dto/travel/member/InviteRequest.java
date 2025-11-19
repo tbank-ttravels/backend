@@ -1,4 +1,4 @@
-package com.tbank.ttravels_backend.dto.travel;
+package com.tbank.ttravels_backend.dto.travel.member;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;

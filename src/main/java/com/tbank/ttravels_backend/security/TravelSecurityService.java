@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 public class TravelSecurityService {
     private final TravelMemberRepository travelMemberRepository;
 
-    public boolean isInvited(Long travelId, Long userId) {
-        return travelMemberRepository.existsByTravelIdAndUserIdAndStatus(travelId, userId, MemberStatus.INVITED);
+    public boolean isInvited(Long inviteId, Long userId) {
+        return travelMemberRepository.existsByIdAndUserIdAndStatus(inviteId, userId, MemberStatus.INVITED);
     }
 
     public boolean isMember(Long travelId, Long userId) {

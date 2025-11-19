@@ -9,6 +9,7 @@ import com.tbank.ttravels_backend.entity.RefreshToken;
 import com.tbank.ttravels_backend.entity.User;
 import com.tbank.ttravels_backend.exception.InvalidCredentialsException;
 import com.tbank.ttravels_backend.exception.RefreshTokenNotFoundException;
+import com.tbank.ttravels_backend.exception.UserNotFoundByPhoneException;
 import com.tbank.ttravels_backend.exception.UserNotFoundException;
 import com.tbank.ttravels_backend.repository.PasswordCredentialRepository;
 import com.tbank.ttravels_backend.repository.RefreshTokenRepository;
@@ -17,6 +18,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -75,5 +79,19 @@ public class AccountService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         return new AccountResponse(user.getPhone(), user.getName(), user.getSurname());
+    }
+
+    public User findUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    public List<User> findUsers(Set<Long> userIds) {
+        return this.userRepository.findAllById(userIds);
+    }
+
+    public User findUserByPhone(String phone) {
+        return userRepository.findByPhone(phone)
+                .orElseThrow(() -> new UserNotFoundByPhoneException(phone));
     }
 }

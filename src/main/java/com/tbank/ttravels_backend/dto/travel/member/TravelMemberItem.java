@@ -1,4 +1,4 @@
-package com.tbank.ttravels_backend.dto.travel;
+package com.tbank.ttravels_backend.dto.travel.member;
 
 import com.tbank.ttravels_backend.enums.MemberStatus;
 import lombok.AllArgsConstructor;

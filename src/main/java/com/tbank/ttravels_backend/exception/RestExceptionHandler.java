@@ -30,7 +30,8 @@ public class RestExceptionHandler {
             EmptyParticipantsListException.class,
             MemberExpenseNotFoundException.class,
             UsersNotFoundInExpenseException.class,
-            DuplicateParticipantException.class
+            DuplicateParticipantException.class,
+            InviteNotFoundException.class
     })
     public ResponseEntity<Object> handleNotFound(RuntimeException ex) {
 

@@ -78,8 +78,7 @@ public class TokenIssuer {
                 access,
                 jwtProperties.getAccessTtl().toSeconds(),
                 refresh,
-                jwtProperties.getRefreshTtl().toSeconds(),
-                "Bearer"
+                jwtProperties.getRefreshTtl().toSeconds()
         );
     }
 

@@ -1,4 +1,4 @@
-package com.tbank.ttravels_backend.dto.travel;
+package com.tbank.ttravels_backend.dto.travel.member;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,6 +9,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class InvitesResponse {
-    List<InvitesItem> invites;
+public class TravelMembersResponse {
+    List<TravelMemberItem> members;
 }
