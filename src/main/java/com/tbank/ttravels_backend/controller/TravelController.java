@@ -177,7 +177,7 @@ public class TravelController {
     @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public void deleteTravel(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
-                             @PathVariable Long travelId,
+                                 @PathVariable Long travelId,
                              @AuthenticationPrincipal UserPrincipal principal) {
         travelService.deleteTravel(travelId);
     }

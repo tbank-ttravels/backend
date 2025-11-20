@@ -83,9 +83,9 @@ public class TravelMemberController {
     @PreAuthorize("@travelSecurity.isInvited(#inviteId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public void respondToInvite(@Parameter(description = "Идентификатор приглашения", required = true, example = "102")
-                                @PathVariable Long inviteId,
+                                    @PathVariable Long inviteId,
                                 @Parameter(description = "Флаг принято/отклонено приглашение", required = true, example = "true")
-                                @RequestParam boolean accept,
+                                    @RequestParam boolean accept,
                                 @AuthenticationPrincipal UserPrincipal principal) {
         travelMemberService.respondToInvite(inviteId, principal.getId(), accept);
     }
@@ -106,7 +106,7 @@ public class TravelMemberController {
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public TravelMembersResponse getTravelMembers(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
-                                                  @PathVariable Long travelId,
+                                                      @PathVariable Long travelId,
                                                   @AuthenticationPrincipal UserPrincipal principal) {
         return travelMemberService.getTravelMembers(travelId);
     }
@@ -128,9 +128,9 @@ public class TravelMemberController {
     @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public void kickMember(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
-                           @PathVariable Long travelId,
+                               @PathVariable Long travelId,
                            @Parameter(description = "Идентификатор пользователя", required = true, example = "25")
-                           @PathVariable Long userId,
+                               @PathVariable Long userId,
                            @AuthenticationPrincipal UserPrincipal principal) {
         travelMemberService.kickMember(travelId, userId);
     }
@@ -152,7 +152,7 @@ public class TravelMemberController {
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public void leaveTravel(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
-                            @PathVariable Long travelId,
+                                @PathVariable Long travelId,
                             @AuthenticationPrincipal UserPrincipal principal) {
         travelMemberService.leaveTravel(travelId, principal.getId());
     }
