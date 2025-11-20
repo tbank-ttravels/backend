@@ -6,6 +6,8 @@ import com.tbank.ttravels_backend.dto.exspense.ExpenseRequestDTO;
 import com.tbank.ttravels_backend.dto.exspense.ExpenseResponseDTO;
 import com.tbank.ttravels_backend.entity.*;
 import com.tbank.ttravels_backend.exception.*;
+import com.tbank.ttravels_backend.factory.ExpenseFactory;
+import com.tbank.ttravels_backend.factory.MemberExpenseFactory;
 import com.tbank.ttravels_backend.mapper.ExpenseDtoMapper;
 import com.tbank.ttravels_backend.repository.ExpenseRepository;
 import jakarta.transaction.Transactional;
@@ -24,6 +26,9 @@ import java.util.stream.Collectors;
 @Service
 public class ExpenseService {
     private final ExpenseRepository expenseRepository;
+
+    private final MemberExpenseService memberExpenseService;
+    private final ExpenseFactory expenseFactory;
     private final ReferenceLookupService referenceLookupService;
     private final ExpenseDtoMapper expenseDtoMapper;
 
@@ -32,13 +37,17 @@ public class ExpenseService {
      * Конструктор сервиса ExpenseService.
      *
      * @param expenseRepository      репозиторий для работы с сущностью Expense
+     * @param memberExpenseService
+     * @param expenseFactory
      * @param referenceLookupService сервис для проверки участия пользователей, поездок и категорий
      * @param expenseDtoMapper       маппер для преобразования сущности Expense в DTO
      */
     public ExpenseService(ExpenseRepository expenseRepository,
-                          ReferenceLookupService referenceLookupService,
+                          MemberExpenseService memberExpenseService, ExpenseFactory expenseFactory, ReferenceLookupService referenceLookupService,
                           ExpenseDtoMapper expenseDtoMapper) {
         this.expenseRepository = expenseRepository;
+        this.memberExpenseService = memberExpenseService;
+        this.expenseFactory = expenseFactory;
         this.referenceLookupService = referenceLookupService;
         this.expenseDtoMapper = expenseDtoMapper;
     }
@@ -86,15 +95,14 @@ public class ExpenseService {
 
         BigDecimal sum = calculateSum(expenseRequestDTO.getParticipantShares().values());
 
-        Expense expense = Expense.create(
-                expenseRequestDTO.getName(),
+        Expense expense = expenseFactory.create(expenseRequestDTO.getName(),
                 expenseRequestDTO.getDescription(),
                 sum,
                 expenseRequestDTO.getDate(),
                 category,
                 payer,
-                travel
-        );
+                travel);
+
 
         distributeExpenseShares(expense,
                 expenseRequestDTO.getParticipantShares(),
@@ -199,12 +207,12 @@ public class ExpenseService {
                 MemberExpense memberExpense;
 
                 if (participant.getId().equals(payerId)) {
-                    memberExpense = MemberExpense.create(participant, entry.getValue());
+                    memberExpense = MemberExpenseFactory.create(participant, entry.getValue());
                 } else {
-                    memberExpense = MemberExpense.create(participant, entry.getValue().negate());
+                    memberExpense = MemberExpenseFactory.create(participant, entry.getValue().negate());
                 }
 
-                expense.addMemberExpense(memberExpense);
+                memberExpenseService.addMemberExpense(expense, memberExpense);
             }
         }
     }
@@ -517,7 +525,8 @@ public class ExpenseService {
             throw new CannotRemovePayerFromExpenseException(expense.getPayer().getId(), expense.getName());
         }
 
-        getMemberExpensesForIds(expense, participantsId).forEach(expense::removeMemberExpense);
+        getMemberExpensesForIds(expense, participantsId).forEach(me ->
+                memberExpenseService.removeMemberExpense(expense, me));
 
         expense.setSum(calculateSum(expense.getMemberExpenses()
                 .stream()
@@ -548,20 +557,20 @@ public class ExpenseService {
      * <p>
      * Для каждого нового участника создается объект MemberExpense с отрицательной долей
      * (отражающей долг участника), после чего он добавляется в трату и пересчитывается общая сумма.
-     *
+     * <p>
      * Проверки:
      * - participantShares не может быть null или пустым.
      * - Все пользователи должны быть участниками поездки.
      * - Новые участники не должны дублировать уже существующих в этой трате.
      * - Доли участников должны быть валидными (не null, > 0).
      *
-     * @param travelId идентификатор поездки
-     * @param expenseId идентификатор траты
+     * @param travelId          идентификатор поездки
+     * @param expenseId         идентификатор траты
      * @param participantShares карта "id пользователя → доля" для добавления
      * @return ExpenseResponseDTO с обновленной информацией о трате
-     * @throws EmptyParticipantsListException если participantShares null или пустая
-     * @throws UserNotFoundInTravelException если один или несколько пользователей не являются участниками поездки
-     * @throws DuplicateParticipantException если один или несколько участников уже есть в этой трате
+     * @throws EmptyParticipantsListException   если participantShares null или пустая
+     * @throws UserNotFoundInTravelException    если один или несколько пользователей не являются участниками поездки
+     * @throws DuplicateParticipantException    если один или несколько участников уже есть в этой трате
      * @throws InvalidParticipantShareException если доля одного из участников некорректна
      */
     @Transactional
@@ -581,10 +590,10 @@ public class ExpenseService {
         ensureParticipantsAreNew(expense, participantShares.keySet());
 
         List<MemberExpense> newParticipants = referenceLookupService.getUsers(participantShares.keySet()).stream()
-                .map(user -> MemberExpense.create(user, participantShares.get(user.getId()).negate()))
+                .map(user -> MemberExpenseFactory.create(user, participantShares.get(user.getId()).negate()))
                 .toList();
 
-        newParticipants.forEach(expense::addMemberExpense);
+        newParticipants.forEach(me -> memberExpenseService.addMemberExpense(expense, me));
 
         expense.setSum(expense.getSum().add(calculateSum(participantShares.values())));
 
@@ -592,12 +601,11 @@ public class ExpenseService {
     }
 
 
-
     /**
      * Проверяет, что среди переданных идентификаторов участников нет дубликатов
      * относительно уже существующих участников данной траты.
      *
-     * @param expense текущая трата
+     * @param expense           текущая трата
      * @param newParticipantIds идентификаторы новых участников
      * @throws DuplicateParticipantException если один или несколько идентификаторов уже присутствуют в тратах
      */
@@ -612,7 +620,11 @@ public class ExpenseService {
                 .collect(Collectors.toSet());
 
         if (!duplicates.isEmpty()) {
-            throw new DuplicateParticipantException(duplicates, expense.getName());
+            throw new DuplicateParticipantException("В трате '" + expense.getName() + "'" +
+                    " уже участвуют пользователи с id: " +
+                    duplicates.stream().sorted()
+                            .map(Object::toString)
+                            .collect(Collectors.joining(", ")));
         }
     }
 }

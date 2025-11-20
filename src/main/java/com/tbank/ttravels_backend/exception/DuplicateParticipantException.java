@@ -5,11 +5,7 @@ import java.util.stream.Collectors;
 
 public class DuplicateParticipantException extends RuntimeException {
 
-    public DuplicateParticipantException(Set<Long> missingUsers, String name) {
-        super("В трате \"" + name + "\"" + " уже участвуют пользователи с id: " +
-                missingUsers.stream()
-                        .sorted()
-                        .map(Object::toString)
-                        .collect(Collectors.joining(", ")));
+    public DuplicateParticipantException(String message) {
+        super(message);
     }
 }
