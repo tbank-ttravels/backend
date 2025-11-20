@@ -47,7 +47,7 @@ public class TravelMemberController {
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void inviteMember(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
-                             @PathVariable Long travelId,
+                                 @PathVariable Long travelId,
                              @Valid @RequestBody InviteRequest request,
                              @AuthenticationPrincipal UserPrincipal principal) {
         travelMemberService.inviteMembers(travelId, request.getPhones());
@@ -82,7 +82,10 @@ public class TravelMemberController {
     @PostMapping("/invites/respond/{inviteId}")
     @PreAuthorize("@travelSecurity.isInvited(#inviteId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
-    public void respondToInvite(@PathVariable Long inviteId, @RequestParam boolean accept,
+    public void respondToInvite(@Parameter(description = "Идентификатор приглашения", required = true, example = "102")
+                                @PathVariable Long inviteId,
+                                @Parameter(description = "Флаг принято/отклонено приглашение", required = true, example = "true")
+                                @RequestParam boolean accept,
                                 @AuthenticationPrincipal UserPrincipal principal) {
         travelMemberService.respondToInvite(inviteId, principal.getId(), accept);
     }
@@ -102,7 +105,8 @@ public class TravelMemberController {
     @GetMapping("/{travelId}")
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
-    public TravelMembersResponse getTravelMembers(@PathVariable Long travelId,
+    public TravelMembersResponse getTravelMembers(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
+                                                  @PathVariable Long travelId,
                                                   @AuthenticationPrincipal UserPrincipal principal) {
         return travelMemberService.getTravelMembers(travelId);
     }
@@ -123,7 +127,9 @@ public class TravelMemberController {
     @DeleteMapping("/{travelId}/kick/{userId}")
     @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
-    public void kickMember(@PathVariable Long travelId,
+    public void kickMember(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
+                           @PathVariable Long travelId,
+                           @Parameter(description = "Идентификатор пользователя", required = true, example = "25")
                            @PathVariable Long userId,
                            @AuthenticationPrincipal UserPrincipal principal) {
         travelMemberService.kickMember(travelId, userId);
@@ -145,7 +151,8 @@ public class TravelMemberController {
     @PostMapping("/{travelId}/leave")
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
-    public void leaveTravel(@PathVariable Long travelId,
+    public void leaveTravel(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
+                            @PathVariable Long travelId,
                             @AuthenticationPrincipal UserPrincipal principal) {
         travelMemberService.leaveTravel(travelId, principal.getId());
     }

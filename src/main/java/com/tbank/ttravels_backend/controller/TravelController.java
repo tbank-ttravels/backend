@@ -85,7 +85,7 @@ public class TravelController {
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public TravelResponse getTravel(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
-                                    @PathVariable Long travelId,
+                                        @PathVariable Long travelId,
                                     @AuthenticationPrincipal UserPrincipal principal) {
         return travelService.getTravel(travelId);
     }
@@ -109,7 +109,7 @@ public class TravelController {
     @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public TravelResponse editTravel(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
-                                     @PathVariable Long travelId,
+                                         @PathVariable Long travelId,
                                      @Valid @RequestBody EditTravelRequest request,
                                      @AuthenticationPrincipal UserPrincipal principal) {
         return travelService.editTravel(travelId, request);
@@ -133,7 +133,7 @@ public class TravelController {
     @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public void closeTravel(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
-                            @PathVariable Long travelId,
+                                @PathVariable Long travelId,
                             @AuthenticationPrincipal UserPrincipal principal) {
         travelService.closeTravel(travelId);
     }
@@ -156,7 +156,7 @@ public class TravelController {
     @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public void reopenTravel(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
-                             @PathVariable Long travelId,
+                                 @PathVariable Long travelId,
                              @AuthenticationPrincipal UserPrincipal principal) {
         travelService.reopenTravel(travelId);
     }
@@ -176,7 +176,8 @@ public class TravelController {
     @DeleteMapping("/{travelId}")
     @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
-    public void deleteTravel(@PathVariable Long travelId,
+    public void deleteTravel(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
+                             @PathVariable Long travelId,
                              @AuthenticationPrincipal UserPrincipal principal) {
         travelService.deleteTravel(travelId);
     }
