@@ -1,6 +1,7 @@
 package com.tbank.ttravels_backend.controller;
 
 import com.tbank.ttravels_backend.exception.*;
+import com.tbank.ttravels_backend.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -12,8 +13,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 @ControllerAdvice
 public class RestExceptionHandler {
@@ -32,7 +31,7 @@ public class RestExceptionHandler {
             UserNotFoundExpenseException.class,
             InviteNotFoundException.class
     })
-    public ResponseEntity<Object> handleNotFound(RuntimeException ex) {
+    public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
 
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
@@ -40,49 +39,49 @@ public class RestExceptionHandler {
     @ExceptionHandler({
             InvalidParticipantShareException.class,
     })
-    public ResponseEntity<Object> handle(RuntimeException ex) {
+    public ResponseEntity<ErrorResponse> handle(RuntimeException ex) {
 
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(Validation.class)
-    public ResponseEntity<Object> handleValidation(Validation ex) {
+    public ResponseEntity<ErrorResponse> handleValidation(Validation ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<Object> handleUserExists(UserAlreadyExistsException ex) {
+    public ResponseEntity<ErrorResponse> handleUserExists(UserAlreadyExistsException ex) {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler({InvalidCredentialsException.class,
             RefreshTokenExpiredException.class})
-    public ResponseEntity<Object> handleUnauthorized(RuntimeException ex) {
+    public ResponseEntity<ErrorResponse> handleUnauthorized(RuntimeException ex) {
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(RefreshTokenNotFoundException.class)
-    public ResponseEntity<Object> handleNotFound(RefreshTokenNotFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleNotFound(RefreshTokenNotFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(InvalidDateRangeException.class)
-    public ResponseEntity<Object> handleInvalidDateRange(InvalidDateRangeException ex) {
+    public ResponseEntity<ErrorResponse> handleInvalidDateRange(InvalidDateRangeException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(OwnerRemovalNotAllowedException.class)
-    public ResponseEntity<Object> handleOwnerRemoval(OwnerRemovalNotAllowedException ex) {
+    public ResponseEntity<ErrorResponse> handleOwnerRemoval(OwnerRemovalNotAllowedException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)
-    public ResponseEntity<Object> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+    public ResponseEntity<ErrorResponse> handleAuthorizationDenied(AuthorizationDeniedException ex) {
         return buildResponse(HttpStatus.FORBIDDEN, "Доступ запрещен");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Object> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(err -> err.getField() + ": " + err.getDefaultMessage())
@@ -91,36 +90,37 @@ public class RestExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Object> handleUnreadable(HttpMessageNotReadableException ex) {
+    public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, "Некорректный JSON");
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<Object> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         return buildResponse(HttpStatus.METHOD_NOT_ALLOWED, "Метод не поддерживается");
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<Object> handleNoHandler(NoResourceFoundException ex) {
+    public ResponseEntity<ErrorResponse> handleNoHandler(NoResourceFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, "Endpoint не найден");
     }
 
     @ExceptionHandler(ConflictStateException.class)
-    public ResponseEntity<Object> handleConflictState(ConflictStateException ex) {
+    public ResponseEntity<ErrorResponse> handleConflictState(ConflictStateException ex) {
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleGeneric(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error");
     }
 
-    private ResponseEntity<Object> buildResponse(HttpStatus status, String message) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("status", status.value());
-        body.put("error", status.getReasonPhrase());
-        body.put("message", message);
-        body.put("timestamp", OffsetDateTime.now());
+    private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String message) {
+        ErrorResponse body = new ErrorResponse(
+                status.value(),
+                status.getReasonPhrase(),
+                message,
+                OffsetDateTime.now()
+        );
         return ResponseEntity.status(status).body(body);
     }
 }
