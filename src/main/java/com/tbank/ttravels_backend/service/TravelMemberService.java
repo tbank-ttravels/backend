@@ -48,6 +48,7 @@ public class TravelMemberService {
                 .forEach(phone -> inviteSingleMember(travel, phone));
     }
 
+    @Transactional
     public MyTravelsResponse getMyTravels(Long userId) {
         List<Travel> travels = findAllTravelForUser(userId);
         return travelMapper.toMyTravelsResponse(travels);
@@ -116,7 +117,6 @@ public class TravelMemberService {
         travelMemberRepository.delete(travelMember);
     }
 
-    @Transactional
     public List<Travel> findAllTravelForUser(Long userId) {
         return travelMemberRepository.findAllByUserIdAndStatus(userId, MemberStatus.ACCEPTED)
                 .stream()
@@ -124,8 +124,6 @@ public class TravelMemberService {
                 .toList();
     }
 
-
-    @Transactional
     public User findUserInTravel(Long userId, Long travelId) {
         return travelMemberRepository.findByUserIdAndTravelId(userId, travelId)
                 .orElseThrow(() ->
