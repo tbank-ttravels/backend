@@ -1,9 +1,6 @@
 package com.tbank.ttravels_backend.service;
 
-import com.tbank.ttravels_backend.entity.Category;
-import com.tbank.ttravels_backend.entity.MemberExpense;
-import com.tbank.ttravels_backend.entity.Travel;
-import com.tbank.ttravels_backend.entity.User;
+import com.tbank.ttravels_backend.entity.*;
 import com.tbank.ttravels_backend.exception.CategoryNotFoundException;
 import com.tbank.ttravels_backend.exception.MemberExpenseNotFoundException;
 import com.tbank.ttravels_backend.exception.TravelNotFoundException;
@@ -18,11 +15,9 @@ import java.util.Set;
 public class ReferenceLookupService {
 
     private final CategoryRepository categoryRepository;
-
     private final MemberExpenseRepository memberExpenseRepository;
     private final TravelRepository travelRepository;
     private final TravelMemberRepository travelMemberRepository;
-
     private final UserRepository userRepository;
 
 
@@ -30,7 +25,8 @@ public class ReferenceLookupService {
     public ReferenceLookupService(CategoryRepository categoryRepository,
                                   MemberExpenseRepository memberExpenseRepository,
                                   TravelRepository travelRepository,
-                                  TravelMemberRepository travelMemberRepository, UserRepository userRepository) {
+                                  TravelMemberRepository travelMemberRepository,
+                                  UserRepository userRepository) {
         this.categoryRepository = categoryRepository;
         this.memberExpenseRepository = memberExpenseRepository;
         this.travelRepository = travelRepository;
@@ -87,5 +83,22 @@ public class ReferenceLookupService {
 
     public List<User> getUsers(Set<Long> userIds) {
         return this.userRepository.findAllById(userIds);
+    }
+
+    public List<Category> findAllCategoryInTravel(Long travelId){
+        return this.categoryRepository.findAllByTravel_Id(travelId);
+    }
+
+    public void checkTravel(Long travelId) {
+        travelRepository.findById(travelId)
+                .orElseThrow(() -> new TravelNotFoundException(travelId));
+    }
+
+    public List<User> findAllUsersInTravel(Long travelId) {
+        return this.findTravel(travelId)
+                .getTravelMembers()
+                .stream()
+                .map(TravelMember::getUser)
+                .toList();
     }
 }

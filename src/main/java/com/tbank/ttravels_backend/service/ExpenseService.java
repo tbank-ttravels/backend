@@ -37,8 +37,8 @@ public class ExpenseService {
      * Конструктор сервиса ExpenseService.
      *
      * @param expenseRepository      репозиторий для работы с сущностью Expense
-     * @param memberExpenseService
-     * @param expenseFactory
+     * @param memberExpenseService   сервис для управления участниками расходов (MemberExpense)
+     * @param expenseFactory         фабрика для создания экземпляров Expense
      * @param referenceLookupService сервис для проверки участия пользователей, поездок и категорий
      * @param expenseDtoMapper       маппер для преобразования сущности Expense в DTO
      */
@@ -53,8 +53,6 @@ public class ExpenseService {
     }
 
 
-    // TODO более одного плательщика
-    // TODO дублирование в мапе участников
 
     /**
      * Создаёт новую трату в указанной поездке.
@@ -626,5 +624,9 @@ public class ExpenseService {
                             .map(Object::toString)
                             .collect(Collectors.joining(", ")));
         }
+    }
+
+    public List<Expense> findAllExpenseInTravel(Long travelId) {
+        return expenseRepository.findAllByTravelId(travelId);
     }
 }
