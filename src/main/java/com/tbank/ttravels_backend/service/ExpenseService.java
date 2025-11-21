@@ -447,7 +447,6 @@ public class ExpenseService {
     }
 
 
-    // TODO а если удалить всех
     /**
      * Удаляет участников из траты и пересчитывает сумму расхода.
      * <p>
@@ -498,7 +497,6 @@ public class ExpenseService {
                                 .toList()
                 )
         );
-
 
         return expenseDtoMapper.createExpenseResponseDTO(expense);
     }

@@ -8,7 +8,6 @@ import com.tbank.ttravels_backend.enums.HistoryType;
 
 public class HistoryFactory {
 
-    // Фабричный метод создания истории
     public static History create(Travel travel, User author,
                                  String description, HistoryType type) {
 

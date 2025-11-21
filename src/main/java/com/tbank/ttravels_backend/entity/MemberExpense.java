@@ -6,7 +6,6 @@ import lombok.*;
 import java.math.BigDecimal;
 
 
-// TODO проверки на null
 @Entity
 @Table(name = "members_expenses")
 @Getter
