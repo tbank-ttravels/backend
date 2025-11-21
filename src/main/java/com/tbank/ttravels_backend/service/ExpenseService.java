@@ -11,6 +11,7 @@ import com.tbank.ttravels_backend.factory.MemberExpenseFactory;
 import com.tbank.ttravels_backend.mapper.ExpenseDtoMapper;
 import com.tbank.ttravels_backend.repository.ExpenseRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,34 +25,15 @@ import java.util.stream.Collectors;
 
 // TODO батч операции
 @Service
+@RequiredArgsConstructor
 public class ExpenseService {
     private final ExpenseRepository expenseRepository;
 
     private final MemberExpenseService memberExpenseService;
-    private final ExpenseFactory expenseFactory;
+    private final TravelMemberService travelMemberService;
     private final ReferenceLookupService referenceLookupService;
     private final ExpenseDtoMapper expenseDtoMapper;
-
-
-    /**
-     * Конструктор сервиса ExpenseService.
-     *
-     * @param expenseRepository      репозиторий для работы с сущностью Expense
-     * @param memberExpenseService   сервис для управления участниками расходов (MemberExpense)
-     * @param expenseFactory         фабрика для создания экземпляров Expense
-     * @param referenceLookupService сервис для проверки участия пользователей, поездок и категорий
-     * @param expenseDtoMapper       маппер для преобразования сущности Expense в DTO
-     */
-    public ExpenseService(ExpenseRepository expenseRepository,
-                          MemberExpenseService memberExpenseService, ExpenseFactory expenseFactory, ReferenceLookupService referenceLookupService,
-                          ExpenseDtoMapper expenseDtoMapper) {
-        this.expenseRepository = expenseRepository;
-        this.memberExpenseService = memberExpenseService;
-        this.expenseFactory = expenseFactory;
-        this.referenceLookupService = referenceLookupService;
-        this.expenseDtoMapper = expenseDtoMapper;
-    }
-
+    private final TravelService travelService;
 
 
     /**
@@ -87,26 +69,24 @@ public class ExpenseService {
         validateExpenseRequestDTO(expenseRequestDTO, travelId);
 
         Category category = referenceLookupService.findCategory(expenseRequestDTO.getCategoryId());
-        Travel travel = referenceLookupService.findTravel(travelId);
+        Travel travel = travelService.findTravel(travelId);
 
-        User payer = referenceLookupService.findUserInTravel(expenseRequestDTO.getPayerId(), travelId);
+        User payer = travelMemberService.findUserInTravel(expenseRequestDTO.getPayerId(), travelId);
 
         BigDecimal sum = calculateSum(expenseRequestDTO.getParticipantShares().values());
 
-        Expense expense = expenseFactory.create(expenseRequestDTO.getName(),
+        Expense expense = ExpenseFactory.create(expenseRequestDTO.getName(),
                 expenseRequestDTO.getDescription(),
                 sum,
                 expenseRequestDTO.getDate(),
                 category,
-                payer,
-                travel);
+                payer);
 
+        travelService.addExpense(travel, expense);
 
         distributeExpenseShares(expense,
                 expenseRequestDTO.getParticipantShares(),
                 payer.getId());
-
-        expenseRepository.save(expense);
 
         return expenseDtoMapper.createExpenseResponseDTO(expense);
     }
@@ -127,7 +107,7 @@ public class ExpenseService {
         }
 
         // Все ли являются участниками поездки?
-        referenceLookupService.validateAllUsersInTravel(travelId, expenseRequestDTO.getParticipantShares().keySet());
+        travelMemberService.validateAllUsersInTravel(travelId, expenseRequestDTO.getParticipantShares().keySet());
 
         // Есть ли в участниках платящий?
         validatePayerInParticipants(expenseRequestDTO.getPayerId(), expenseRequestDTO.getParticipantShares().keySet());
@@ -198,16 +178,16 @@ public class ExpenseService {
                                          Long payerId) {
 
         if (participantShares != null) {
-            for (Map.Entry<Long, BigDecimal> entry : participantShares.entrySet()) {
+            for (Map.Entry<Long, BigDecimal> participantShare : participantShares.entrySet()) {
 
-                User participant = referenceLookupService.findUserInTravel(entry.getKey(), expense.getTravel().getId());
+                User participant = travelMemberService.findUserInTravel(participantShare.getKey(), expense.getTravel().getId());
 
                 MemberExpense memberExpense;
 
                 if (participant.getId().equals(payerId)) {
-                    memberExpense = MemberExpenseFactory.create(participant, entry.getValue());
+                    memberExpense = MemberExpenseFactory.create(participant, participantShare.getValue());
                 } else {
-                    memberExpense = MemberExpenseFactory.create(participant, entry.getValue().negate());
+                    memberExpense = MemberExpenseFactory.create(participant, participantShare.getValue().negate());
                 }
 
                 memberExpenseService.addMemberExpense(expense, memberExpense);
@@ -227,11 +207,13 @@ public class ExpenseService {
      * @throws ExpenseNotFoundInTravelException если трата не найдена в поездке
      * @throws UserNotFoundInTravelException    если пользователь не участвует в поездке
      */
+    @Transactional
     public void deleteExpense(Long travelId, Long expenseId) {
 
         Expense expense = this.findExpenseInTravel(expenseId, travelId);
+        Travel travel = travelService.findTravel(travelId);
 
-        expenseRepository.delete(expense);
+        travelService.removeExpense(travel, expense);
     }
 
 
@@ -244,9 +226,6 @@ public class ExpenseService {
      * @throws ExpenseNotFoundInTravelException если трата не найдена в указанной поездке
      */
     public Expense findExpenseInTravel(Long expenseId, Long travelId) {
-
-        // TODO нужнен ли?
-        referenceLookupService.findTravel(travelId);
 
         return expenseRepository.findByIdAndTravelId(expenseId, travelId)
                 .orElseThrow(() -> new ExpenseNotFoundInTravelException(expenseId, travelId));
@@ -283,8 +262,8 @@ public class ExpenseService {
 
         // Если DTO пустое, обновлять нечего
         if (!this.hasAnyField(expenseUpdateRequestDTO)) {
-            // TODO корректнее обработать
-            throw new EmptyUpdateRequestException();
+
+            throw new EmptyUpdateRequestException("Отсутствуют поля для обновления траты");
         }
 
         // Переданы ли участники
@@ -314,7 +293,7 @@ public class ExpenseService {
                 !expenseUpdateRequestDTO.payerId().equals(expense.getPayer().getId())) {
             updatePayer(
                     expense,
-                    referenceLookupService.findUserInTravel(
+                    travelMemberService.findUserInTravel(
                             expenseUpdateRequestDTO.payerId(),
                             travelId));
         }
@@ -489,6 +468,8 @@ public class ExpenseService {
     }
 
 
+    // TODO а если удалить всех
+
     /**
      * Удаляет участников из траты и пересчитывает сумму расхода.
      * <p>
@@ -526,10 +507,14 @@ public class ExpenseService {
         getMemberExpensesForIds(expense, participantsId).forEach(me ->
                 memberExpenseService.removeMemberExpense(expense, me));
 
-        expense.setSum(calculateSum(expense.getMemberExpenses()
-                .stream()
-                .map(MemberExpense::getShare)
-                .toList()));
+        expense.setSum(
+                calculateSum(
+                        expense.getMemberExpenses().stream()
+                                .map(me -> me.getShare().abs())
+                                .toList()
+                )
+        );
+
 
         return expenseDtoMapper.createExpenseResponseDTO(expense);
     }
@@ -583,7 +568,7 @@ public class ExpenseService {
         Expense expense = this.findExpenseInTravel(expenseId, travelId);
 
         // Все ли являются участниками поездки?
-        referenceLookupService.validateAllUsersInTravel(travelId, participantShares.keySet());
+        travelMemberService.validateAllUsersInTravel(travelId, participantShares.keySet());
 
         ensureParticipantsAreNew(expense, participantShares.keySet());
 

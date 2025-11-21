@@ -129,13 +129,15 @@ public class TravelMemberService {
     public User findUserInTravel(Long userId, Long travelId) {
         return travelMemberRepository.findByUserIdAndTravelId(userId, travelId)
                 .orElseThrow(() ->
-                        new UserNotFoundInTravelException(userId, travelId))
+                        new UserNotFoundInTravelException("Пользователь с id = " + userId +
+                                " не найден в поездке с id = " + travelId))
                 .getUser();
     }
 
     public void checkUserInTravel(Long userId, Long travelId) {
         if (!travelMemberRepository.existsByUserIdAndTravelId(userId, travelId))
-            throw new UserNotFoundInTravelException(userId, travelId);
+            throw new UserNotFoundInTravelException("Пользователь с id = " + userId +
+                    " не найден в поездке с id = " + travelId);
     }
 
     public void validateAllUsersInTravel(Long travelId, Set<Long> participantUserIds) {
@@ -151,7 +153,8 @@ public class TravelMemberService {
 
     public TravelMember findMemberInTravel(Long userId, Long travelId) {
         return travelMemberRepository.findByUserIdAndTravelId(userId, travelId)
-                .orElseThrow(() -> new UserNotFoundInTravelException(userId, travelId));
+                .orElseThrow(() -> new UserNotFoundInTravelException("Пользователь с id = " + userId +
+                        " не найден в поездке с id = " + travelId));
     }
 
     public List<TravelMember> findInviteInTravelForUser(Long userId) {
