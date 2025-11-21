@@ -24,13 +24,11 @@ public class RestExceptionHandler {
             UserNotFoundInTravelException.class,
             UserNotFoundException.class,
             EmptyUpdateRequestException.class,
-            InitiatorNoAccessException.class,
             PayerNotInParticipantsException.class,
             CannotRemovePayerFromExpenseException.class,
             EmptyParticipantsListException.class,
-            MemberExpenseNotFoundException.class,
-            UsersNotFoundInExpenseException.class,
             DuplicateParticipantException.class,
+            UserNotFoundExpenseException.class,
             InviteNotFoundException.class
     })
     public ResponseEntity<Object> handleNotFound(RuntimeException ex) {
@@ -40,7 +38,6 @@ public class RestExceptionHandler {
 
     @ExceptionHandler({
             InvalidParticipantShareException.class,
-            PayerShareInvalidException.class
     })
     public ResponseEntity<Object> handle(RuntimeException ex) {
 

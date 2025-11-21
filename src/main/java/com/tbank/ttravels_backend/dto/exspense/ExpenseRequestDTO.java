@@ -1,6 +1,7 @@
 package com.tbank.ttravels_backend.dto.exspense;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
@@ -20,13 +21,14 @@ public class ExpenseRequestDTO {
 
     private String description;
 
-    @NotNull
+    @NotNull(message = "Плательщик не выбран")
     private Long payerId;
 
     private OffsetDateTime date = OffsetDateTime.now();
 
+    @NotEmpty(message = "Отсутствуют участники")
     private Map<Long, BigDecimal> participantShares = new HashMap<>();
 
-    @NotNull(message = "Обязательное поле")
+    @NotNull(message = "Категория не выбрана")
     private Long categoryId;
 }

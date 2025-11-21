@@ -6,23 +6,24 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 
 // TODO стоит ли тут делать проверки
-@Component
+//@Component
 public class ExpenseFactory {
 
-    private final MemberExpenseService memberExpenseService;
+//    private final MemberExpenseService memberExpenseService;
+//
+//
+//    public ExpenseFactory(MemberExpenseService memberExpenseService) {
+//        this.memberExpenseService = memberExpenseService;
+//    }
 
 
-    public ExpenseFactory(MemberExpenseService memberExpenseService) {
-        this.memberExpenseService = memberExpenseService;
-    }
-
-
-    public Expense create(String name, String description, BigDecimal sum, OffsetDateTime date,
-                          Category category, User payer, Travel travel) {
+    public static Expense create(String name, String description, BigDecimal sum, OffsetDateTime date,
+                          Category category, User payer) {
 
         return Expense.builder()
                 .name(name)
@@ -31,29 +32,29 @@ public class ExpenseFactory {
                 .date(date)
                 .category(category)
                 .payer(payer)
-                .travel(travel) // TODO через travel
+                .memberExpenses(new HashSet<>())
                 .build();
     }
 
 
-    public Expense create(String name, String description, BigDecimal sum, OffsetDateTime date,
-                          Set<MemberExpense> memberExpenses, Category category, User payer, Travel travel) {
-
-        Expense expense = this.create(name, description, sum, date, category, payer, travel);
-
-        memberExpenses.forEach(me -> memberExpenseService.addMemberExpense(expense, me));
-
-        return expense;
-    }
-
-
-    public Expense create(Long id, String name, String description, BigDecimal sum, OffsetDateTime date,
-                          Set<MemberExpense> memberExpenses, Category category, User payer, Travel travel) {
-
-        Expense expense = this.create(name, description, sum, date, memberExpenses, category, payer, travel);
-
-        expense.setId(id);
-
-        return expense;
-    }
+//    public Expense create(String name, String description, BigDecimal sum, OffsetDateTime date,
+//                          Set<MemberExpense> memberExpenses, Category category, User payer) {
+//
+//        Expense expense = this.create(name, description, sum, date, category, payer);
+//
+//        memberExpenses.forEach(me -> memberExpenseService.addMemberExpense(expense, me));
+//
+//        return expense;
+//    }
+//
+//
+//    public Expense create(Long id, String name, String description, BigDecimal sum, OffsetDateTime date,
+//                          Set<MemberExpense> memberExpenses, Category category, User payer, Travel travel) {
+//
+//        Expense expense = this.create(name, description, sum, date, memberExpenses, category, payer, travel);
+//
+//        expense.setId(id);
+//
+//        return expense;
+//    }
 }

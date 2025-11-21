@@ -6,7 +6,6 @@ import java.util.Map;
 
 
 public record ExpenseUpdateRequestDTO(
-        // Безопасные поля
         String name,
         String description,
         OffsetDateTime date,

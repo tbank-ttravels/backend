@@ -3,16 +3,16 @@ package com.tbank.ttravels_backend.service;
 import com.tbank.ttravels_backend.dto.travel.CreateTravelRequest;
 import com.tbank.ttravels_backend.dto.travel.EditTravelRequest;
 import com.tbank.ttravels_backend.dto.travel.TravelResponse;
+import com.tbank.ttravels_backend.entity.Expense;
 import com.tbank.ttravels_backend.entity.Travel;
 import com.tbank.ttravels_backend.entity.TravelMember;
 import com.tbank.ttravels_backend.entity.User;
 import com.tbank.ttravels_backend.enums.TravelStatus;
-import com.tbank.ttravels_backend.exception.ConflictStateException;
-import com.tbank.ttravels_backend.exception.InvalidDateRangeException;
-import com.tbank.ttravels_backend.exception.TravelNotFoundException;
+import com.tbank.ttravels_backend.exception.*;
 import com.tbank.ttravels_backend.factory.TravelFactory;
 import com.tbank.ttravels_backend.factory.TravelMemberFactory;
 import com.tbank.ttravels_backend.mapper.TravelMapper;
+import com.tbank.ttravels_backend.repository.TravelMemberRepository;
 import com.tbank.ttravels_backend.repository.TravelRepository;
 import com.tbank.ttravels_backend.security.AccountService;
 import jakarta.transaction.Transactional;
@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -27,6 +28,7 @@ import java.util.Set;
 public class TravelService {
 
     private final TravelRepository travelRepository;
+    private final TravelMemberRepository travelMemberRepository;
     private final TravelMapper travelMapper;
     private final AccountService accountService;
 
@@ -111,12 +113,48 @@ public class TravelService {
 
     public Travel findTravel(Long travelId) {
         return travelRepository.findById(travelId)
-                .orElseThrow(() -> new TravelNotFoundException(travelId));
+                .orElseThrow(() -> new TravelNotFoundException("Поездка с id = " + travelId + " не найдена"));
     }
 
     private void validateDateRange(OffsetDateTime start, OffsetDateTime end) {
         if (start != null && end != null && !end.isAfter(start)) {
             throw new InvalidDateRangeException("Дата окончания должна быть позже даты начала");
         }
+    }
+
+
+    public void addExpense(Travel travel, Expense expense) {
+        checkTravelAndExpenseIsNull(travel, expense);
+
+        if (travel.getExpenses().contains(expense)) {
+            throw new DuplicateExpenseException("Трата с id = " + expense.getId() +
+                    "уже существует в поездке '" + travel.getName() + "'");
+        }
+
+        travel.getExpenses().add(expense);
+        expense.setTravel(travel);
+    }
+
+    public void removeExpense(Travel travel, Expense expense) {
+
+        checkTravelAndExpenseIsNull(travel, expense);
+
+        travel.getExpenses().remove(expense);
+        expense.setTravel(null);
+    }
+
+    private void checkTravelAndExpenseIsNull(Travel travel, Expense expense) {
+
+        if (expense == null) {
+            throw new IllegalArgumentException("Expense is null");
+        }
+        if (travel == null) {
+            throw new IllegalArgumentException("Travel is null");
+        }
+    }
+
+    public void checkTravel(Long travelId) {
+        travelRepository.findById(travelId)
+                .orElseThrow(() -> new TravelNotFoundException("Поездка с id = " + travelId + " не найдена"));
     }
 }
