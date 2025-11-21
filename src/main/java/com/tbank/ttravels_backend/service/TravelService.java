@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -112,7 +113,7 @@ public class TravelService {
 
     public Travel findTravel(Long travelId) {
         return travelRepository.findById(travelId)
-                .orElseThrow(() -> new TravelNotFoundException(travelId));
+                .orElseThrow(() -> new TravelNotFoundException("Поездка с id = " + travelId + " не найдена"));
     }
 
     private void validateDateRange(OffsetDateTime start, OffsetDateTime end) {
@@ -150,5 +151,10 @@ public class TravelService {
         if (travel == null) {
             throw new IllegalArgumentException("Travel is null");
         }
+    }
+
+    public void checkTravel(Long travelId) {
+        travelRepository.findById(travelId)
+                .orElseThrow(() -> new TravelNotFoundException("Поездка с id = " + travelId + " не найдена"));
     }
 }

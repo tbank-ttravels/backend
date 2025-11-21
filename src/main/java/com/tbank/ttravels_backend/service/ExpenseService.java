@@ -103,7 +103,7 @@ public class ExpenseService {
     private void validateExpenseRequestDTO(ExpenseRequestDTO expenseRequestDTO, Long travelId) {
 
         if (expenseRequestDTO.getParticipantShares() == null || expenseRequestDTO.getParticipantShares().isEmpty()) {
-            throw new InvalidParticipantShareException();
+            throw new InvalidParticipantShareException("Трата должена содержать хотя бы одного участника");
         }
 
         // Все ли являются участниками поездки?
@@ -111,7 +111,6 @@ public class ExpenseService {
 
         // Есть ли в участниках платящий?
         validatePayerInParticipants(expenseRequestDTO.getPayerId(), expenseRequestDTO.getParticipantShares().keySet());
-
 
         // Валидация долей
         validateShares(expenseRequestDTO.getParticipantShares());
@@ -132,9 +131,9 @@ public class ExpenseService {
 
         for (Map.Entry<Long, BigDecimal> entry : participantShares.entrySet()) {
             if (entry.getValue() == null)
-                throw new InvalidParticipantShareException(entry.getKey(), "Доля участника не может быть пустой");
+                throw new InvalidParticipantShareException("Доля участника с id = " + entry.getKey() + " не может быть пустой");
             if (entry.getValue().signum() <= 0)
-                throw new InvalidParticipantShareException(entry.getKey(), "Доля участника должна быть положительной");
+                throw new InvalidParticipantShareException("Доля участника с id = " + entry.getKey() + " должна быть положительной");
         }
     }
 
@@ -145,7 +144,7 @@ public class ExpenseService {
     private void validatePayerInParticipants(Long payerId, Set<Long> participantUserIds) {
 
         if (participantUserIds != null && !participantUserIds.contains(payerId)) {
-            throw new PayerNotInParticipantsException(payerId);
+            throw new PayerNotInParticipantsException("Плательщик должен участвовать в трате id = " + payerId);
         }
     }
 
@@ -228,7 +227,8 @@ public class ExpenseService {
     public Expense findExpenseInTravel(Long expenseId, Long travelId) {
 
         return expenseRepository.findByIdAndTravelId(expenseId, travelId)
-                .orElseThrow(() -> new ExpenseNotFoundInTravelException(expenseId, travelId));
+                .orElseThrow(() -> new ExpenseNotFoundInTravelException("Трата с id = " +
+                        expenseId + " не найдена в поездке с id = " + travelId));
     }
 
 
@@ -435,41 +435,19 @@ public class ExpenseService {
 
         if (participantShares != null && !participantShares.isEmpty()) {
 
-            Set<Long> missingUsers = findMissingUsersInExpense(expense, participantShares.keySet());
-            if (!missingUsers.isEmpty()) {
-                throw new UsersNotFoundInExpenseException(missingUsers, expense.getName());
+            var participants = expense.getMemberExpenses().stream()
+                    .map(me -> me.getParticipant().getId()).collect(Collectors.toSet());
+            for (var id : participantShares.keySet()) {
+                if (!participants.contains(id))
+                    throw new UserNotFoundExpenseException("Пользователь с id = " + id +
+                            "не является участником траты '" + expense.getName() + "'");
             }
             validateShares(participantShares);
         }
     }
 
 
-    /**
-     * Возвращает множество ID пользователей, которые отсутствуют среди участников данной траты.
-     * <p>
-     * Метод предварительно кэширует ID всех участников траты для оптимизации проверки.
-     * Позволяет гибко обрабатывать ситуацию с отсутствующими участниками (например, выбросить исключение
-     * или просто логировать).
-     *
-     * @param expense текущая трата
-     * @param usersId коллекция идентификаторов пользователей для проверки
-     * @return множество ID пользователей, которые отсутствуют в тратах
-     */
-    private Set<Long> findMissingUsersInExpense(Expense expense, Collection<Long> usersId) {
-
-        // Кэширую ID
-        Set<Long> membersExpenseIds = expense.getMemberExpenses().stream()
-                .map(me -> me.getParticipant().getId())
-                .collect(Collectors.toSet());
-
-        return usersId.stream()
-                .filter(id -> !membersExpenseIds.contains(id))
-                .collect(Collectors.toSet());
-    }
-
-
     // TODO а если удалить всех
-
     /**
      * Удаляет участников из траты и пересчитывает сумму расхода.
      * <p>
@@ -484,24 +462,30 @@ public class ExpenseService {
      * @return актуальный ExpenseResponseDTO после удаления участников
      * @throws EmptyParticipantsListException        если participantsId пустой
      * @throws CannotRemovePayerFromExpenseException если пытаются удалить плательщика
-     * @throws UsersNotFoundInExpenseException       если указанные участники не найдены в тратах
+     * @throws UserNotFoundExpenseException          если участник не найден в трате
      */
     @Transactional
     public ExpenseResponseDTO deleteParticipantsFromExpense(Long travelId, Long expenseId, Set<Long> participantsId) {
 
         if (participantsId == null || participantsId.isEmpty()) {
-            throw new EmptyParticipantsListException();
+            throw new EmptyParticipantsListException("Список участников для удаления из траты пуст");
         }
 
         Expense expense = this.findExpenseInTravel(expenseId, travelId);
 
-        Set<Long> missingUsers = findMissingUsersInExpense(expense, participantsId);
-        if (!missingUsers.isEmpty()) {
-            throw new UsersNotFoundInExpenseException(missingUsers, expense.getName());
+        var participantsIdInExpense = expense.getMemberExpenses().stream()
+                .map(me -> me.getParticipant().getId())
+                .collect(Collectors.toSet());
+        for (Long id : participantsId) {
+            if (!participantsIdInExpense.contains(id)) {
+                throw new UserNotFoundExpenseException("Невозможно удалить пользователя с id = " + id +
+                        ", так как его нет в трате '" + expense.getName() + "'");
+            }
         }
 
         if (participantsId.contains(expense.getPayer().getId())) {
-            throw new CannotRemovePayerFromExpenseException(expense.getPayer().getId(), expense.getName());
+            throw new CannotRemovePayerFromExpenseException("Невозможно удалить плательщикас с id = " +
+                    expense.getPayer().getId() + " из траты '" + expense.getName() + "'");
         }
 
         getMemberExpensesForIds(expense, participantsId).forEach(me ->
@@ -560,7 +544,7 @@ public class ExpenseService {
     public ExpenseResponseDTO addParticipantsToExpense(Long travelId, Long expenseId, Map<Long, BigDecimal> participantShares) {
 
         if (participantShares == null || participantShares.isEmpty()) {
-            throw new EmptyParticipantsListException();
+            throw new EmptyParticipantsListException("Список участников для добавления в трату пуст");
         }
 
         this.validateShares(participantShares);
@@ -604,7 +588,7 @@ public class ExpenseService {
 
         if (!duplicates.isEmpty()) {
             throw new DuplicateParticipantException("В трате '" + expense.getName() + "'" +
-                    " уже участвуют пользователи с id: " +
+                    " уже участвует пользователь с id: " +
                     duplicates.stream().sorted()
                             .map(Object::toString)
                             .collect(Collectors.joining(", ")));

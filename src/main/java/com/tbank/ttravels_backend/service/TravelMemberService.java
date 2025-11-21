@@ -62,7 +62,8 @@ public class TravelMemberService {
     @Transactional
     public void respondToInvite(Long inviteId, Long userId, boolean accept) {
         TravelMember invite = travelMemberRepository.findByIdAndUserIdAndStatus(inviteId, userId, MemberStatus.INVITED)
-                .orElseThrow(() -> new InviteNotFoundException(userId, inviteId));
+                .orElseThrow(() -> new InviteNotFoundException("Для пользователя с id = " + userId +
+                        " не найдено приглашение с id = " + inviteId));
 
         invite.setStatus(accept ? MemberStatus.ACCEPTED : MemberStatus.REJECTED);
         saveTravelMember(invite);

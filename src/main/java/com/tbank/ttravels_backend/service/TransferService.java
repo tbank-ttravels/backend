@@ -35,13 +35,13 @@ public class TransferService {
         CreateTransferValidator.validateCreate(request);
 
         Travel travel = travelRepository.findById(request.getTravelId())
-                .orElseThrow(() -> new TravelNotFoundException(request.getTravelId()));
+                .orElseThrow(() -> new TravelNotFoundException("Пользователь с id = " + request.getTravelId() + " не найден"));
 
         User sender = userRepository.findById(request.getSenderId())
-                .orElseThrow(() -> new UserNotFoundException(request.getSenderId()));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с id = " + request.getSenderId() + " не найден"));
 
         User recipient = userRepository.findById(request.getRecipientId())
-                .orElseThrow(() -> new UserNotFoundException(request.getRecipientId()));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с id = " + request.getRecipientId() + " не найден"));
 
         Transfer transfer = Transfer.builder()
                 .travel(travel)

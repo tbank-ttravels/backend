@@ -2,11 +2,9 @@ package com.tbank.ttravels_backend.service;
 
 import com.tbank.ttravels_backend.dto.expense_analytics.CategoryAnalyticsResponseDTO;
 import com.tbank.ttravels_backend.dto.expense_analytics.TravelExpenseAnalyticsDTO;
-import com.tbank.ttravels_backend.entity.Category;
-import com.tbank.ttravels_backend.entity.Expense;
-import com.tbank.ttravels_backend.entity.MemberExpense;
-import com.tbank.ttravels_backend.entity.User;
+import com.tbank.ttravels_backend.entity.*;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -20,16 +18,13 @@ import static com.tbank.ttravels_backend.dto.expense_analytics.CategoryAnalytics
  * Сервис формирования аналитики расходов по категориям внутри поездки.
  */
 @Service
+@RequiredArgsConstructor
 public class ExpenseAnalyticsService {
 
     private final ExpenseService expenseService;
     private final ReferenceLookupService referenceLookupService;
-
-    public ExpenseAnalyticsService(ExpenseService expenseService, ReferenceLookupService referenceLookupService) {
-        this.expenseService = expenseService;
-        this.referenceLookupService = referenceLookupService;
-    }
-
+    private final TravelService travelService;
+    private final TravelMemberService travelMemberService;
 
     /**
      * Формирует аналитику расходов по категориям в рамках одной поездки.
@@ -45,7 +40,7 @@ public class ExpenseAnalyticsService {
     @Transactional
     public TravelExpenseAnalyticsDTO analyticsCategory(Long travelId) {
 
-        this.referenceLookupService.checkTravel(travelId);
+        this.travelService.checkTravel(travelId);
 
 
         // Сбор данных
@@ -65,7 +60,10 @@ public class ExpenseAnalyticsService {
 
         // 5. Кто, сколько в каждой категории потратил
         Map<Long, List<ParticipantStats>> participantStats = buildParticipantStatsByCategory(
-                buildCategoryUserStats(expensesByCategory), referenceLookupService.findAllUsersInTravel(travelId));
+                buildCategoryUserStats(expensesByCategory),
+                this.travelMemberService.findAllMembersInTravel(travelId).stream()
+                        .map(TravelMember::getUser)
+                        .toList());
 
         // 6. мапа "Категория : количество трат"
         Map<Long, Integer> expenseCountByCategory = calculateExpenseCountByCategory(expensesByCategory);

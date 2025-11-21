@@ -77,13 +77,13 @@ public class AccountService {
 
     public AccountResponse getCurrentUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с id = " + userId + " не найден"));
         return new AccountResponse(user.getPhone(), user.getName(), user.getSurname());
     }
 
     public User findUser(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с id = " + userId + " не найден"));
     }
 
     public List<User> findUsers(Set<Long> userIds) {
@@ -92,6 +92,7 @@ public class AccountService {
 
     public User findUserByPhone(String phone) {
         return userRepository.findByPhone(phone)
-                .orElseThrow(() -> new UserNotFoundByPhoneException(phone));
+                .orElseThrow(() ->
+                        new UserNotFoundByPhoneException("Пользователь с phone = " + phone + " не найден"));
     }
 }
