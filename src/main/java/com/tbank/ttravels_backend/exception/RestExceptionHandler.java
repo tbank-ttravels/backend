@@ -77,8 +77,8 @@ public class RestExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    @ExceptionHandler(TravelNotFound.class)
-    public ResponseEntity<Object> handleTravelNotExist(TravelNotFound ex) {
+    @ExceptionHandler(TravelNotFoundException.class)
+    public ResponseEntity<Object> handleTravelNotExist(TravelNotFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
