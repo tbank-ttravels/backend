@@ -19,7 +19,7 @@ public class AnalyticsController {
 
 
     @GetMapping
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.OK)
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     public TravelExpenseAnalyticsDTO analytic(@PathVariable Long travelId,
                                               @AuthenticationPrincipal UserPrincipal principal) {
