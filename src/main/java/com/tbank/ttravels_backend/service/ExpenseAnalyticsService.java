@@ -22,7 +22,7 @@ import static com.tbank.ttravels_backend.dto.expense_analytics.CategoryAnalytics
 public class ExpenseAnalyticsService {
 
     private final ExpenseService expenseService;
-    private final ReferenceLookupService referenceLookupService;
+    private final CategoryService categoryService;
     private final TravelService travelService;
     private final TravelMemberService travelMemberService;
 
@@ -45,7 +45,7 @@ public class ExpenseAnalyticsService {
 
         // Сбор данных
         // 1. Все категории
-        var categories = referenceLookupService.findAllCategoryInTravel(travelId);
+        var categories = categoryService.findAllCategoryInTravel(travelId);
 
         // 2. мапа "Категория : список трат"
         Map<Long, List<Expense>> expensesByCategory = loadAndGroupExpensesByCategory(travelId);

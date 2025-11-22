@@ -31,7 +31,8 @@ public class ExpenseService {
 
     private final MemberExpenseService memberExpenseService;
     private final TravelMemberService travelMemberService;
-    private final ReferenceLookupService referenceLookupService;
+    private final CategoryService categoryService;
+    private final UserService userService;
     private final ExpenseDtoMapper expenseDtoMapper;
     private final TravelService travelService;
 
@@ -68,7 +69,7 @@ public class ExpenseService {
 
         validateExpenseRequestDTO(expenseRequestDTO, travelId);
 
-        Category category = referenceLookupService.findCategory(expenseRequestDTO.getCategoryId());
+        Category category = this.categoryService.findCategory(expenseRequestDTO.getCategoryId());
         Travel travel = travelService.findTravel(travelId);
 
         User payer = travelMemberService.findUserInTravel(expenseRequestDTO.getPayerId(), travelId);
@@ -375,7 +376,7 @@ public class ExpenseService {
         }
 
         if (categoryId != null) {
-            expense.setCategory(referenceLookupService.findCategory(categoryId));
+            expense.setCategory(this.categoryService.findCategory(categoryId));
         }
 
         if (date != null) {
@@ -440,7 +441,7 @@ public class ExpenseService {
             for (var id : participantShares.keySet()) {
                 if (!participants.contains(id))
                     throw new UserNotFoundExpenseException("Пользователь с id = " + id +
-                            "не является участником траты '" + expense.getName() + "'");
+                            " не является участником траты '" + expense.getName() + "'");
             }
             validateShares(participantShares);
         }
@@ -554,7 +555,7 @@ public class ExpenseService {
 
         ensureParticipantsAreNew(expense, participantShares.keySet());
 
-        List<MemberExpense> newParticipants = referenceLookupService.getUsers(participantShares.keySet()).stream()
+        List<MemberExpense> newParticipants = this.userService.getUsers(participantShares.keySet()).stream()
                 .map(user -> MemberExpenseFactory.create(user, participantShares.get(user.getId()).negate()))
                 .toList();
 
