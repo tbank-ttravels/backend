@@ -12,7 +12,7 @@ public class TravelMemberFactory {
         throw new UnsupportedOperationException();
     }
 
-    public static TravelMember ownerMembership(Travel travel, User owner) {
+    public static TravelMember createOwnerMember(Travel travel, User owner) {
         return TravelMember.builder()
                 .travel(travel)
                 .user(owner)
@@ -21,7 +21,7 @@ public class TravelMemberFactory {
                 .build();
     }
 
-    public static TravelMember invitedMember(Travel travel, User invitedUser) {
+    public static TravelMember createInvitedMember(Travel travel, User invitedUser) {
         return TravelMember.builder()
                 .travel(travel)
                 .user(invitedUser)

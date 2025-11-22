@@ -8,7 +8,10 @@ import com.tbank.ttravels_backend.entity.Travel;
 import com.tbank.ttravels_backend.entity.TravelMember;
 import com.tbank.ttravels_backend.entity.User;
 import com.tbank.ttravels_backend.enums.TravelStatus;
-import com.tbank.ttravels_backend.exception.*;
+import com.tbank.ttravels_backend.exception.ConflictStateException;
+import com.tbank.ttravels_backend.exception.DuplicateExpenseException;
+import com.tbank.ttravels_backend.exception.InvalidDateRangeException;
+import com.tbank.ttravels_backend.exception.TravelNotFoundException;
 import com.tbank.ttravels_backend.factory.TravelFactory;
 import com.tbank.ttravels_backend.factory.TravelMemberFactory;
 import com.tbank.ttravels_backend.mapper.TravelMapper;
@@ -20,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Set;
 
 @Service
@@ -40,7 +42,7 @@ public class TravelService {
         Travel newTravel = TravelFactory.createTravel(request, owner);
 
         Set<TravelMember> members = newTravel.getTravelMembers();
-        members.add(TravelMemberFactory.ownerMembership(newTravel, owner));
+        members.add(TravelMemberFactory.createOwnerMember(newTravel, owner));
 
         Travel travel = saveTravel(newTravel);
 
@@ -116,13 +118,6 @@ public class TravelService {
                 .orElseThrow(() -> new TravelNotFoundException("Поездка с id = " + travelId + " не найдена"));
     }
 
-    private void validateDateRange(OffsetDateTime start, OffsetDateTime end) {
-        if (start != null && end != null && !end.isAfter(start)) {
-            throw new InvalidDateRangeException("Дата окончания должна быть позже даты начала");
-        }
-    }
-
-
     public void addExpense(Travel travel, Expense expense) {
         checkTravelAndExpenseIsNull(travel, expense);
 
@@ -141,6 +136,35 @@ public class TravelService {
 
         travel.getExpenses().remove(expense);
         expense.setTravel(null);
+    }
+
+    public void addTravelMember(Travel travel, TravelMember travelMember) {
+        checkTravelAndMemberIsNull(travel, travelMember);
+
+        travel.getTravelMembers().add(travelMember);
+        travelMember.setTravel(travel);
+    }
+
+    public void removeTravelMember(Travel travel, TravelMember travelMember) {
+        checkTravelAndMemberIsNull(travel, travelMember);
+
+        travel.getTravelMembers().remove(travelMember);
+        travelMember.setTravel(null);
+    }
+
+    private void checkTravelAndMemberIsNull(Travel travel, TravelMember travelMember) {
+        if (travelMember == null) {
+            throw new IllegalArgumentException("Travel member is null");
+        }
+        if (travel == null) {
+            throw new IllegalArgumentException("Travel is null");
+        }
+    }
+
+    private void validateDateRange(OffsetDateTime start, OffsetDateTime end) {
+        if (start != null && end != null && !end.isAfter(start)) {
+            throw new InvalidDateRangeException("Дата окончания должна быть позже даты начала");
+        }
     }
 
     private void checkTravelAndExpenseIsNull(Travel travel, Expense expense) {

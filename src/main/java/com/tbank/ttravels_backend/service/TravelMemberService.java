@@ -105,8 +105,9 @@ public class TravelMemberService {
                     .formatted(phone));
         }
 
-        TravelMember newMember = TravelMemberFactory.invitedMember(travel, invitedUser);
-        saveTravelMember(newMember);
+        TravelMember newMember = TravelMemberFactory.createInvitedMember(travel, invitedUser);
+        travelService.addTravelMember(travel, newMember);
+        travelService.saveTravel(travel);
     }
 
     public TravelMember saveTravelMember(TravelMember travelMember) {
@@ -114,7 +115,9 @@ public class TravelMemberService {
     }
 
     private void deleteTravelMember(TravelMember travelMember) {
-        travelMemberRepository.delete(travelMember);
+        Travel travel = travelMember.getTravel();
+        travelService.removeTravelMember(travel, travelMember);
+        travelService.saveTravel(travel);
     }
 
     @Transactional
