@@ -45,4 +45,9 @@ public class Travel {
             cascade = CascadeType.ALL,
             orphanRemoval = true)
     private List<Expense> expenses = new ArrayList<>();
+
+    @OneToMany(mappedBy = "travel",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    private List<Transfer> transfers = new ArrayList<>();
 }

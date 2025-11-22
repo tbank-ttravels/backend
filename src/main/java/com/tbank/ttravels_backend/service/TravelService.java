@@ -3,10 +3,7 @@ package com.tbank.ttravels_backend.service;
 import com.tbank.ttravels_backend.dto.travel.CreateTravelRequest;
 import com.tbank.ttravels_backend.dto.travel.EditTravelRequest;
 import com.tbank.ttravels_backend.dto.travel.TravelResponse;
-import com.tbank.ttravels_backend.entity.Expense;
-import com.tbank.ttravels_backend.entity.Travel;
-import com.tbank.ttravels_backend.entity.TravelMember;
-import com.tbank.ttravels_backend.entity.User;
+import com.tbank.ttravels_backend.entity.*;
 import com.tbank.ttravels_backend.enums.TravelStatus;
 import com.tbank.ttravels_backend.exception.ConflictStateException;
 import com.tbank.ttravels_backend.exception.DuplicateExpenseException;
@@ -138,6 +135,20 @@ public class TravelService {
         expense.setTravel(null);
     }
 
+    public void addTransfer(Travel travel, Transfer transfer) {
+        checkTravelAndTransferIsNull(travel, transfer);
+
+        travel.getTransfers().add(transfer);
+        transfer.setTravel(travel);
+    }
+
+    public void removeTransfer(Travel travel, Transfer transfer) {
+        checkTravelAndTransferIsNull(travel, transfer);
+
+        travel.getTransfers().remove(transfer);
+        transfer.setTravel(null);
+    }
+
     public void addTravelMember(Travel travel, TravelMember travelMember) {
         checkTravelAndMemberIsNull(travel, travelMember);
 
@@ -155,6 +166,15 @@ public class TravelService {
     private void checkTravelAndMemberIsNull(Travel travel, TravelMember travelMember) {
         if (travelMember == null) {
             throw new IllegalArgumentException("Travel member is null");
+        }
+        if (travel == null) {
+            throw new IllegalArgumentException("Travel is null");
+        }
+    }
+
+    private void checkTravelAndTransferIsNull(Travel travel, Transfer transfer) {
+        if (transfer == null) {
+            throw new IllegalArgumentException("Transfer is null");
         }
         if (travel == null) {
             throw new IllegalArgumentException("Travel is null");

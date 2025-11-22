@@ -10,11 +10,7 @@ import com.tbank.ttravels_backend.entity.Transfer;
 import com.tbank.ttravels_backend.entity.Travel;
 import com.tbank.ttravels_backend.entity.User;
 import com.tbank.ttravels_backend.exception.TransferNotFound;
-import com.tbank.ttravels_backend.exception.TravelNotFoundException;
-import com.tbank.ttravels_backend.exception.UserNotFoundException;
 import com.tbank.ttravels_backend.repository.TransferRepository;
-import com.tbank.ttravels_backend.repository.TravelRepository;
-import com.tbank.ttravels_backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,40 +23,29 @@ import java.util.List;
 public class TransferService {
 
     private final TransferRepository transferRepository;
-    private final TravelRepository travelRepository;
-    private final UserRepository userRepository;
+    private final TravelService travelService;
+    private final TravelMemberService travelMemberService;
 
     @Transactional
     public TransferResponse createTransfer(CreateTransferRequest request) {
         CreateTransferValidator.validateCreate(request);
 
-        Travel travel = travelRepository.findById(request.getTravelId())
-                .orElseThrow(() -> new TravelNotFoundException("Пользователь с id = " + request.getTravelId() + " не найден"));
+        Travel travel = travelService.findTravel(request.getTravelId());
 
-        User sender = userRepository.findById(request.getSenderId())
-                .orElseThrow(() -> new UserNotFoundException("Пользователь с id = " + request.getSenderId() + " не найден"));
-
-        User recipient = userRepository.findById(request.getRecipientId())
-                .orElseThrow(() -> new UserNotFoundException("Пользователь с id = " + request.getRecipientId() + " не найден"));
+        User sender = travelMemberService.findUserInTravel(request.getSenderId(), travel.getId());
+        User recipient = travelMemberService.findUserInTravel(request.getRecipientId(), travel.getId());
 
         Transfer transfer = Transfer.builder()
-                .travel(travel)
                 .sender(sender)
                 .recipient(recipient)
                 .sum(request.getSum())
                 .date(OffsetDateTime.now())
                 .build();
 
-        Transfer saved = transferRepository.save(transfer);
+        travelService.addTransfer(travel, transfer);
+        travelService.saveTravel(travel);
 
-        return new TransferResponse(
-                saved.getId(),
-                saved.getTravel().getId(),
-                saved.getSender().getId(),
-                saved.getRecipient().getId(),
-                saved.getSum(),
-                saved.getDate()
-        );
+        return toResponse(transfer);
     }
 
     @Transactional
@@ -74,14 +59,7 @@ public class TransferService {
 
         Transfer updated = transferRepository.save(transfer);
 
-        return new TransferResponse(
-                updated.getId(),
-                updated.getTravel().getId(),
-                updated.getSender().getId(),
-                updated.getRecipient().getId(),
-                updated.getSum(),
-                updated.getDate()
-        );
+        return toResponse(updated);
     }
 
     @Transactional
@@ -89,17 +67,20 @@ public class TransferService {
         List<Transfer> transfers = transferRepository.findAllByTravel_Id(travelId);
 
         List<TransferResponse> items = transfers.stream()
-                .map(t -> new TransferResponse(
-                        t.getId(),
-                        t.getTravel().getId(),
-                        t.getSender().getId(),
-                        t.getRecipient().getId(),
-                        t.getSum(),
-                        t.getDate()
-                ))
+                .map(this::toResponse)
                 .toList();
 
         return new TransfersListResponse(items);
     }
-}
 
+    private TransferResponse toResponse(Transfer transfer) {
+        return new TransferResponse(
+                transfer.getId(),
+                transfer.getTravel().getId(),
+                transfer.getSender().getId(),
+                transfer.getRecipient().getId(),
+                transfer.getSum(),
+                transfer.getDate()
+        );
+    }
+}
