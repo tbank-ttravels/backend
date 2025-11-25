@@ -1,4 +1,4 @@
-package com.tbank.ttravels_backend.security;
+package com.tbank.ttravels_backend.controller;
 
 import com.tbank.ttravels_backend.dto.ErrorResponse;
 import com.tbank.ttravels_backend.dto.auth.AuthLoginRequest;
@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.tbank.ttravels_backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;

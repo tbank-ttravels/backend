@@ -16,7 +16,6 @@ import com.tbank.ttravels_backend.factory.TravelMemberFactory;
 import com.tbank.ttravels_backend.mapper.TravelMapper;
 import com.tbank.ttravels_backend.mapper.TravelMemberMapper;
 import com.tbank.ttravels_backend.repository.TravelMemberRepository;
-import com.tbank.ttravels_backend.security.AccountService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -84,7 +83,7 @@ public class TravelMemberService {
             throw new OwnerRemovalNotAllowedException("Нельзя исключить владельца поездки");
         }
 
-        deleteTravelMember(member);
+        member.setStatus(MemberStatus.LEAVE);
     }
 
     @Transactional
@@ -95,7 +94,7 @@ public class TravelMemberService {
             throw new OwnerRemovalNotAllowedException("Владелец не может покинуть поездку");
         }
 
-        deleteTravelMember(member);
+        member.setStatus(MemberStatus.LEAVE);
     }
 
     private void inviteSingleMember(Travel travel, String phone) {
@@ -115,12 +114,7 @@ public class TravelMemberService {
         return travelMemberRepository.save(travelMember);
     }
 
-    private void deleteTravelMember(TravelMember travelMember) {
-        Travel travel = travelMember.getTravel();
-        travelService.removeTravelMember(travel, travelMember);
-        travelService.saveTravel(travel);
-    }
-
+    @Transactional
     public List<Travel> findAllTravelForUser(Long userId) {
         return travelMemberRepository.findAllByUserIdAndStatus(userId, MemberStatus.ACCEPTED)
                 .stream()

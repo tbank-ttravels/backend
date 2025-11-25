@@ -2,7 +2,6 @@ package com.tbank.ttravels_backend.controller;
 
 import com.tbank.ttravels_backend.dto.ErrorResponse;
 import com.tbank.ttravels_backend.dto.travel.member.InviteRequest;
-import com.tbank.ttravels_backend.dto.travel.member.InvitesResponse;
 import com.tbank.ttravels_backend.dto.travel.member.TravelMembersResponse;
 import com.tbank.ttravels_backend.security.UserPrincipal;
 import com.tbank.ttravels_backend.service.TravelMemberService;
@@ -23,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Travel Members", description = "Операции управления участниками поездок")
 @RestController
-@RequestMapping("/api/members")
+@RequestMapping("/travels/{travelId}/members")
 @RequiredArgsConstructor
 public class TravelMemberController {
     private final TravelMemberService travelMemberService;
@@ -43,7 +42,7 @@ public class TravelMemberController {
             @ApiResponse(responseCode = "409", description = "Один или несколько пользователей уже являются участниками поездки",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PostMapping("/{travelId}/invite")
+    @PostMapping("/invite")
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void inviteMember(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
@@ -51,43 +50,6 @@ public class TravelMemberController {
                              @Valid @RequestBody InviteRequest request,
                              @AuthenticationPrincipal UserPrincipal principal) {
         travelMemberService.inviteMembers(travelId, request.getPhones());
-    }
-
-    @Operation(summary = "Получить приглашения в поездки",
-            description = "Позволяет пользователю получить список всех приглашений в поездки.",
-            security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Список приглашений успешно получен"),
-            @ApiResponse(responseCode = "403", description = "Пользователь не аутентифицирован",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @GetMapping("/invites")
-    @ResponseStatus(HttpStatus.OK)
-    public InvitesResponse getInvites(@AuthenticationPrincipal UserPrincipal principal) {
-        return travelMemberService.getInvites(principal.getId());
-    }
-
-    @Operation(summary = "Ответить на приглашение в поездку",
-            description = "Позволяет пользователю принять или отклонить приглашение в поездку.",
-            security = @SecurityRequirement(name = "bearerAuth")
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Ответ на приглашение успешно обработан"),
-            @ApiResponse(responseCode = "403", description = "Пользователь не имеет права отвечать на это приглашение",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Приглашение не найдено",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @PostMapping("/invites/respond/{inviteId}")
-    @PreAuthorize("@travelSecurity.isInvited(#inviteId, principal.id)")
-    @ResponseStatus(HttpStatus.OK)
-    public void respondToInvite(@Parameter(description = "Идентификатор приглашения", required = true, example = "102")
-                                    @PathVariable Long inviteId,
-                                @Parameter(description = "Флаг принято/отклонено приглашение", required = true, example = "true")
-                                    @RequestParam boolean accept,
-                                @AuthenticationPrincipal UserPrincipal principal) {
-        travelMemberService.respondToInvite(inviteId, principal.getId(), accept);
     }
 
     @Operation(summary = "Получить участников поездки",
@@ -102,7 +64,7 @@ public class TravelMemberController {
             @ApiResponse(responseCode = "404", description = "Поездка не найдена",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @GetMapping("/{travelId}")
+    @GetMapping()
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public TravelMembersResponse getTravelMembers(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
@@ -124,7 +86,7 @@ public class TravelMemberController {
             @ApiResponse(responseCode = "409", description = "Попытка исключить владельца поездки",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @DeleteMapping("/{travelId}/kick/{userId}")
+    @DeleteMapping("/kick/{userId}")
     @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public void kickMember(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
@@ -148,7 +110,7 @@ public class TravelMemberController {
             @ApiResponse(responseCode = "409", description = "Попытка владельца покинуть поездку",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PostMapping("/{travelId}/leave")
+    @PostMapping("/leave")
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public void leaveTravel(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
@@ -156,5 +118,4 @@ public class TravelMemberController {
                             @AuthenticationPrincipal UserPrincipal principal) {
         travelMemberService.leaveTravel(travelId, principal.getId());
     }
-
 }

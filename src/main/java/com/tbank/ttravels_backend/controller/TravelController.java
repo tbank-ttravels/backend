@@ -25,12 +25,13 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Travels", description = "Операции с поездками")
 @RestController
-@RequestMapping("/api/travels")
+@RequestMapping("/travels")
 @RequiredArgsConstructor
 public class TravelController {
     private final TravelService travelService;
     private final TravelMemberService travelMemberService;
 
+    @PostMapping()
     @Operation(
             summary = "Создать новую поездку",
             description = "Создает новую поездку и назначает создателя владельцем",
@@ -51,6 +52,7 @@ public class TravelController {
         return travelService.createTravel(request, principal.getId());
     }
 
+    @GetMapping()
     @Operation(
             summary = "Получить мои поездки",
             description = "Возвращает список всех поездок, в которых участвует пользователь",

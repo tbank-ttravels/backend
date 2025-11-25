@@ -18,7 +18,7 @@ import java.util.Set;
 
 
 @RestController
-@RequestMapping("/api/travels/{travelId}/expenses")
+@RequestMapping("/travels/{travelId}/expenses")
 public class ExpenseController {
 
     private final ExpenseService expenseService;

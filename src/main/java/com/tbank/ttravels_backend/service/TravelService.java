@@ -14,7 +14,6 @@ import com.tbank.ttravels_backend.factory.TravelMemberFactory;
 import com.tbank.ttravels_backend.mapper.TravelMapper;
 import com.tbank.ttravels_backend.repository.TravelMemberRepository;
 import com.tbank.ttravels_backend.repository.TravelRepository;
-import com.tbank.ttravels_backend.security.AccountService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -154,13 +153,6 @@ public class TravelService {
 
         travel.getTravelMembers().add(travelMember);
         travelMember.setTravel(travel);
-    }
-
-    public void removeTravelMember(Travel travel, TravelMember travelMember) {
-        checkTravelAndMemberIsNull(travel, travelMember);
-
-        travel.getTravelMembers().remove(travelMember);
-        travelMember.setTravel(null);
     }
 
     private void checkTravelAndMemberIsNull(Travel travel, TravelMember travelMember) {

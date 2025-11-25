@@ -9,7 +9,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/travels/{travelId}/analytic")
+@RequestMapping("/travels/{travelId}/analytic")
 public class AnalyticsController {
     private final ExpenseAnalyticsService expenseAnalyticsService;
 

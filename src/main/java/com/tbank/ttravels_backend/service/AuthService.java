@@ -1,4 +1,4 @@
-package com.tbank.ttravels_backend.security;
+package com.tbank.ttravels_backend.service;
 
 import com.tbank.ttravels_backend.dto.auth.AuthLoginRequest;
 import com.tbank.ttravels_backend.dto.auth.AuthRegisterRequest;
@@ -9,6 +9,7 @@ import com.tbank.ttravels_backend.exception.InvalidCredentialsException;
 import com.tbank.ttravels_backend.exception.UserAlreadyExistsException;
 import com.tbank.ttravels_backend.repository.PasswordCredentialRepository;
 import com.tbank.ttravels_backend.repository.UserRepository;
+import com.tbank.ttravels_backend.security.TokenIssuer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
