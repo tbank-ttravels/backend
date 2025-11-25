@@ -1,7 +1,6 @@
 package com.tbank.ttravels_backend.controller;
 
 import com.tbank.ttravels_backend.dto.travel.member.InviteRequest;
-import com.tbank.ttravels_backend.dto.travel.member.InvitesResponse;
 import com.tbank.ttravels_backend.dto.travel.member.TravelMembersResponse;
 import com.tbank.ttravels_backend.security.UserPrincipal;
 import com.tbank.ttravels_backend.service.TravelMemberService;
@@ -13,12 +12,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/members")
+@RequestMapping("/travels/{travelId}/members")
 @RequiredArgsConstructor
 public class TravelMemberController {
     private final TravelMemberService travelMemberService;
 
-    @PostMapping("/{travelId}/invite")
+    @PostMapping("/invite")
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void inviteMember(@PathVariable Long travelId,
@@ -27,21 +26,7 @@ public class TravelMemberController {
         travelMemberService.inviteMembers(travelId, request.getPhones());
     }
 
-    @GetMapping("/invites")
-    @ResponseStatus(HttpStatus.OK)
-    public InvitesResponse getInvites(@AuthenticationPrincipal UserPrincipal principal) {
-        return travelMemberService.getInvites(principal.getId());
-    }
-
-    @PostMapping("/invites/respond/{inviteId}")
-    @PreAuthorize("@travelSecurity.isInvited(#inviteId, principal.id)")
-    @ResponseStatus(HttpStatus.OK)
-    public void respondToInvite(@PathVariable Long inviteId, @RequestParam boolean accept,
-                                @AuthenticationPrincipal UserPrincipal principal) {
-        travelMemberService.respondToInvite(inviteId, principal.getId(), accept);
-    }
-
-    @GetMapping("/{travelId}")
+    @GetMapping()
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public TravelMembersResponse getTravelMembers(@PathVariable Long travelId,
@@ -49,7 +34,7 @@ public class TravelMemberController {
         return travelMemberService.getTravelMembers(travelId);
     }
 
-    @DeleteMapping("/{travelId}/kick/{userId}")
+    @DeleteMapping("/kick/{userId}")
     @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public void kickMember(@PathVariable Long travelId,
@@ -58,12 +43,11 @@ public class TravelMemberController {
         travelMemberService.kickMember(travelId, userId);
     }
 
-    @PostMapping("/{travelId}/leave")
+    @PostMapping("/leave")
     @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     @ResponseStatus(HttpStatus.OK)
     public void leaveTravel(@PathVariable Long travelId,
                             @AuthenticationPrincipal UserPrincipal principal) {
         travelMemberService.leaveTravel(travelId, principal.getId());
     }
-
 }

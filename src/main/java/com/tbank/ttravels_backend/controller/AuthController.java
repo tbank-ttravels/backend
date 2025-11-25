@@ -1,8 +1,9 @@
-package com.tbank.ttravels_backend.security;
+package com.tbank.ttravels_backend.controller;
 
 import com.tbank.ttravels_backend.dto.auth.AuthLoginRequest;
 import com.tbank.ttravels_backend.dto.auth.AuthRegisterRequest;
 import com.tbank.ttravels_backend.dto.auth.AuthResponse;
+import com.tbank.ttravels_backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;

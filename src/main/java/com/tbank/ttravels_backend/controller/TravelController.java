@@ -15,20 +15,20 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/travels")
+@RequestMapping("/travels")
 @RequiredArgsConstructor
 public class TravelController {
     private final TravelService travelService;
     private final TravelMemberService travelMemberService;
 
-    @PostMapping("/create")
+    @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
     public TravelResponse create(@Valid @RequestBody CreateTravelRequest request,
                                  @AuthenticationPrincipal UserPrincipal principal) {
         return travelService.createTravel(request, principal.getId());
     }
 
-    @GetMapping("/my")
+    @GetMapping()
     @ResponseStatus(HttpStatus.OK)
     public MyTravelsResponse getMyTravels(@AuthenticationPrincipal UserPrincipal principal) {
         return travelMemberService.getMyTravels(principal.getId());

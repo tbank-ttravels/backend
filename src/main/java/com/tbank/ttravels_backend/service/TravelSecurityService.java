@@ -1,4 +1,4 @@
-package com.tbank.ttravels_backend.security;
+package com.tbank.ttravels_backend.service;
 
 import com.tbank.ttravels_backend.enums.MemberRole;
 import com.tbank.ttravels_backend.enums.MemberStatus;
