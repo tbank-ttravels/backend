@@ -42,6 +42,7 @@ public class Expense {
     @JoinColumn(name = "travel_id")
     private Travel travel;
 
+    @Builder.Default
     @OneToMany(cascade = CascadeType.ALL,
             mappedBy = "expense",
             orphanRemoval = true)

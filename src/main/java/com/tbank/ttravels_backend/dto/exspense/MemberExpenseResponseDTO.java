@@ -1,10 +1,10 @@
 package com.tbank.ttravels_backend.dto.exspense;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.util.Objects;
-
 
 
 /**
@@ -14,11 +14,14 @@ import java.util.Objects;
  * @param share   Доля (+ платил, - должен)
  */
 
+
 @Builder
-public record MemberExpenseResponseDTO(Long userId,
-                                       String name,
-                                       String surname,
-                                       BigDecimal share) {
+public record MemberExpenseResponseDTO(
+        @Schema(description = "ID пользователя", example = "45") Long userId,
+        @Schema(description = "Имя пользователя", example = "Иван") String name,
+        @Schema(description = "Фамилия пользователя", example = "Иванов") String surname,
+        @Schema(description = "Доля пользователя", example = "800") BigDecimal share
+) {
 
     @Override
     public boolean equals(Object o) {

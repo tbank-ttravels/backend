@@ -17,6 +17,8 @@ import static com.tbank.ttravels_backend.dto.expense_analytics.CategoryAnalytics
 /**
  * Сервис формирования аналитики расходов по категориям внутри поездки.
  */
+
+// TODO если трат нет
 @Service
 @RequiredArgsConstructor
 public class ExpenseAnalyticsService {
@@ -38,7 +40,7 @@ public class ExpenseAnalyticsService {
      * и общую сумму расходов по поездке
      */
     @Transactional
-    public TravelExpenseAnalyticsDTO analyticsCategory(Long travelId) {
+    public TravelExpenseAnalyticsDTO generateExpenseReport(Long travelId) {
 
         this.travelService.checkTravel(travelId);
 
