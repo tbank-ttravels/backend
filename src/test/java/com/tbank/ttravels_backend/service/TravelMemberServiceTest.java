@@ -15,7 +15,6 @@ import com.tbank.ttravels_backend.exception.UserNotFoundInTravelException;
 import com.tbank.ttravels_backend.mapper.TravelMapper;
 import com.tbank.ttravels_backend.mapper.TravelMemberMapper;
 import com.tbank.ttravels_backend.repository.TravelMemberRepository;
-import com.tbank.ttravels_backend.security.AccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -224,7 +223,7 @@ class TravelMemberServiceTest {
     }
 
     @Test
-    void kickMember_shouldRemoveNonOwner() {
+    void kickMember_shouldMarkMemberAsLeft() {
         TravelMember toKick = TravelMember.builder()
                 .id(4L)
                 .travel(travel)
@@ -236,8 +235,9 @@ class TravelMemberServiceTest {
 
         travelMemberService.kickMember(42L, 5L);
 
-        verify(travelService).removeTravelMember(travel, toKick);
-        verify(travelService).saveTravel(travel);
+        assertThat(toKick.getStatus()).isEqualTo(MemberStatus.LEAVE);
+        verify(travelMemberRepository).findByUserIdAndTravelId(5L, 42L);
+        verifyNoInteractions(travelService);
     }
 
     @Test
@@ -254,11 +254,13 @@ class TravelMemberServiceTest {
         assertThatThrownBy(() -> travelMemberService.kickMember(42L, 5L))
                 .isInstanceOf(OwnerRemovalNotAllowedException.class);
 
-        verify(travelService, never()).removeTravelMember(any(), any());
+        assertThat(ownerMember.getStatus()).isEqualTo(MemberStatus.ACCEPTED);
+        verify(travelMemberRepository).findByUserIdAndTravelId(5L, 42L);
+        verifyNoInteractions(travelService);
     }
 
     @Test
-    void leaveTravel_shouldRemoveNonOwner() {
+    void leaveTravel_shouldMarkMemberAsLeft() {
         TravelMember toLeave = TravelMember.builder()
                 .id(6L)
                 .travel(travel)
@@ -270,8 +272,9 @@ class TravelMemberServiceTest {
 
         travelMemberService.leaveTravel(42L, 5L);
 
-        verify(travelService).removeTravelMember(travel, toLeave);
-        verify(travelService).saveTravel(travel);
+        assertThat(toLeave.getStatus()).isEqualTo(MemberStatus.LEAVE);
+        verify(travelMemberRepository).findByUserIdAndTravelId(5L, 42L);
+        verifyNoInteractions(travelService);
     }
 
     @Test
@@ -288,7 +291,9 @@ class TravelMemberServiceTest {
         assertThatThrownBy(() -> travelMemberService.leaveTravel(42L, 5L))
                 .isInstanceOf(OwnerRemovalNotAllowedException.class);
 
-        verify(travelService, never()).removeTravelMember(any(), any());
+        assertThat(ownerMember.getStatus()).isEqualTo(MemberStatus.ACCEPTED);
+        verify(travelMemberRepository).findByUserIdAndTravelId(5L, 42L);
+        verifyNoInteractions(travelService);
     }
 
     @Test

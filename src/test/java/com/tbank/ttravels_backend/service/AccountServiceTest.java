@@ -11,7 +11,6 @@ import com.tbank.ttravels_backend.exception.UserNotFoundException;
 import com.tbank.ttravels_backend.repository.PasswordCredentialRepository;
 import com.tbank.ttravels_backend.repository.RefreshTokenRepository;
 import com.tbank.ttravels_backend.repository.UserRepository;
-import com.tbank.ttravels_backend.security.AccountService;
 import com.tbank.ttravels_backend.security.TokenHashService;
 import com.tbank.ttravels_backend.security.TokenIssuer;
 import org.junit.jupiter.api.BeforeEach;

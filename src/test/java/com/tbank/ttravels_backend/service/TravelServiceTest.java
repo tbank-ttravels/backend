@@ -13,7 +13,6 @@ import com.tbank.ttravels_backend.exception.InvalidDateRangeException;
 import com.tbank.ttravels_backend.exception.TravelNotFoundException;
 import com.tbank.ttravels_backend.mapper.TravelMapper;
 import com.tbank.ttravels_backend.repository.TravelRepository;
-import com.tbank.ttravels_backend.security.AccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -337,18 +336,6 @@ class TravelServiceTest {
 
         assertThat(existingTravel.getTravelMembers()).contains(member);
         assertThat(member.getTravel()).isEqualTo(existingTravel);
-    }
-
-    @Test
-    void removeTravelMember_shouldDetachMember() {
-        TravelMember member = new TravelMember();
-        member.setTravel(existingTravel);
-        existingTravel.getTravelMembers().add(member);
-
-        travelService.removeTravelMember(existingTravel, member);
-
-        assertThat(existingTravel.getTravelMembers()).doesNotContain(member);
-        assertThat(member.getTravel()).isNull();
     }
 
     @Test
