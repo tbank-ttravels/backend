@@ -47,6 +47,7 @@ public class TravelMemberService {
                 .forEach(phone -> inviteSingleMember(travel, phone));
     }
 
+    @Transactional
     public MyTravelsResponse getMyTravels(Long userId) {
         List<Travel> travels = findAllTravelForUser(userId);
         return travelMapper.toMyTravelsResponse(travels);
@@ -121,8 +122,6 @@ public class TravelMemberService {
                 .toList();
     }
 
-
-    @Transactional
     public User findUserInTravel(Long userId, Long travelId) {
         return travelMemberRepository.findByUserIdAndTravelId(userId, travelId)
                 .orElseThrow(() ->

@@ -1,9 +1,6 @@
 package com.tbank.ttravels_backend.service;
 
-import com.tbank.ttravels_backend.dto.auth.AccountResponse;
-import com.tbank.ttravels_backend.dto.auth.AuthResponse;
-import com.tbank.ttravels_backend.dto.auth.ChangePasswordRequest;
-import com.tbank.ttravels_backend.dto.auth.RefreshOrLogoutRequest;
+import com.tbank.ttravels_backend.dto.auth.*;
 import com.tbank.ttravels_backend.entity.PasswordCredential;
 import com.tbank.ttravels_backend.entity.RefreshToken;
 import com.tbank.ttravels_backend.entity.User;
@@ -55,7 +52,7 @@ public class AccountService {
     }
 
     @Transactional
-    public void logout(Long userId, RefreshOrLogoutRequest request) {
+    public void logout(Long userId, LogoutRequest request) {
         String tokenHash = tokenHashService.hash(request.getRefreshToken());
         RefreshToken token = refreshTokenRepository.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new RefreshTokenNotFoundException("Refresh token не найден"));
@@ -69,7 +66,7 @@ public class AccountService {
     }
 
     @Transactional
-    public AuthResponse refresh(RefreshOrLogoutRequest request) {
+    public AuthResponse refresh(RefreshRequest request) {
         String tokenHash = tokenHashService.hash(request.getRefreshToken());
         RefreshToken storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new RefreshTokenNotFoundException("Refresh token не найден"));
