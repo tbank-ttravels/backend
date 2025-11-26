@@ -4,6 +4,7 @@ package com.tbank.ttravels_backend.service;
 import com.tbank.ttravels_backend.dto.expense_update.ExpenseUpdateRequestDTO;
 import com.tbank.ttravels_backend.dto.exspense.ExpenseRequestDTO;
 import com.tbank.ttravels_backend.dto.exspense.ExpenseResponseDTO;
+import com.tbank.ttravels_backend.dto.exspense.TravelExpensesResponseDTO;
 import com.tbank.ttravels_backend.entity.*;
 import com.tbank.ttravels_backend.exception.*;
 import com.tbank.ttravels_backend.factory.ExpenseFactory;
@@ -24,6 +25,8 @@ import java.util.stream.Collectors;
 
 
 // TODO батч операции
+// TODO вернуть список всех трат
+// TODO долги
 @Service
 @RequiredArgsConstructor
 public class ExpenseService {
@@ -63,6 +66,7 @@ public class ExpenseService {
      * @throws UserNotFoundInTravelException    если плательщик не является участником поездки.
      * @throws TravelNotFoundException          если поездка с travelId не найдена.
      * @throws CategoryNotFoundException        если категория с указанным id не найдена.
+     * @throws DuplicateExpenseException        если трата уже добавлена, или участник траты уже в трате
      */
     @Transactional
     public ExpenseResponseDTO createExpense(ExpenseRequestDTO expenseRequestDTO, Long travelId) {
@@ -103,7 +107,7 @@ public class ExpenseService {
      */
     private void validateExpenseRequestDTO(ExpenseRequestDTO expenseRequestDTO, Long travelId) {
 
-        if (expenseRequestDTO.getParticipantShares() == null || expenseRequestDTO.getParticipantShares().isEmpty()) {
+        if (expenseRequestDTO.getParticipantShares().isEmpty()) {
             throw new InvalidParticipantShareException("Трата должена содержать хотя бы одного участника");
         }
 
@@ -205,7 +209,7 @@ public class ExpenseService {
      * @param travelId  идентификатор поездки
      * @param expenseId идентификатор траты для удаления
      * @throws ExpenseNotFoundInTravelException если трата не найдена в поездке
-     * @throws UserNotFoundInTravelException    если пользователь не участвует в поездке
+     * @throws TravelNotFoundException          если поездка не найдена
      */
     @Transactional
     public void deleteExpense(Long travelId, Long expenseId) {
@@ -594,7 +598,44 @@ public class ExpenseService {
         }
     }
 
-    public List<Expense> findAllExpenseInTravel(Long travelId) {
-        return expenseRepository.findAllByTravelId(travelId);
+
+    /**
+     * Возвращает все расходы указанной поездки в виде DTO с общей суммой и количеством расходов.
+     *
+     * @param travelId идентификатор поездки
+     * @return DTO с суммой всех расходов, количеством и списком расходов
+     * @throws TravelNotFoundException если поездка с указанным travelId не найдена
+     */
+    public TravelExpensesResponseDTO getAllExpensesInTravel(Long travelId) {
+
+        travelService.checkTravel(travelId);
+
+        List<Expense> expenses = findAllExpensesInTravel(travelId);
+
+        List<ExpenseResponseDTO> expensesDTO = expenses.stream()
+                .map(expenseDtoMapper::createExpenseResponseDTO)
+                .toList();
+
+        BigDecimal amount = expensesDTO.stream()
+                .map(ExpenseResponseDTO::sum)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return TravelExpensesResponseDTO.builder()
+                .expenses(expensesDTO)
+                .totalAmount(amount)
+                .totalCount(expensesDTO.size())
+                .build();
+    }
+
+
+    /**
+     * Возвращает все расходы указанной поездки в виде DTO с общей суммой и количеством расходов.
+     *
+     * @param travelId идентификатор поездки
+     * @return DTO с суммой всех расходов, количеством и списком расходов
+     */
+    public List<Expense> findAllExpensesInTravel(Long travelId) {
+
+        return expenseRepository.findAllByTravelIdOrderByDateDesc(travelId);
     }
 }
