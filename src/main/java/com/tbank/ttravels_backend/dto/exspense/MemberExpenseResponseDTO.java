@@ -16,6 +16,7 @@ import java.util.Objects;
 
 
 @Builder
+@Schema(description = "DTO участника траты")
 public record MemberExpenseResponseDTO(
         @Schema(description = "ID пользователя", example = "45") Long userId,
         @Schema(description = "Имя пользователя", example = "Иван") String name,

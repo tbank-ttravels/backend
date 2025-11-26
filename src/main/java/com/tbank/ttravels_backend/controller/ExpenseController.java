@@ -5,11 +5,11 @@ import com.tbank.ttravels_backend.dto.ErrorResponse;
 import com.tbank.ttravels_backend.dto.expense_update.ExpenseUpdateRequestDTO;
 import com.tbank.ttravels_backend.dto.exspense.ExpenseRequestDTO;
 import com.tbank.ttravels_backend.dto.exspense.ExpenseResponseDTO;
+import com.tbank.ttravels_backend.dto.exspense.TravelExpensesResponseDTO;
 import com.tbank.ttravels_backend.security.UserPrincipal;
 import com.tbank.ttravels_backend.service.ExpenseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -119,18 +119,18 @@ public class ExpenseController {
                     content = @Content(
                             schema = @Schema(implementation = ExpenseUpdateRequestDTO.class),
                             examples = @ExampleObject(value = """
-                        {
-                          "name": "Обед с друзьями",
-                          "description": "Поход в кафе после работы",
-                          "date": "2025-11-22T15:30:00+03:00",
-                          "categoryId": 2,
-                          "payerId": 5,
-                          "participantShares": {
-                            "1": 100.0,
-                            "2": 50.0
-                          }
-                        }
-                        """)
+                                    {
+                                      "name": "Обед с друзьями",
+                                      "description": "Поход в кафе после работы",
+                                      "date": "2025-11-22T15:30:00+03:00",
+                                      "categoryId": 2,
+                                      "payerId": 5,
+                                      "participantShares": {
+                                        "1": 100.0,
+                                        "2": 50.0
+                                      }
+                                    }
+                                    """)
                     )
             )
             @RequestBody @Valid ExpenseUpdateRequestDTO expenseUpdateRequestDTO,
@@ -217,5 +217,40 @@ public class ExpenseController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         return expenseService.addParticipantsToExpense(travelId, expenseId, participantShares);
+    }
+
+
+    @Operation(
+            summary = "Получить все расходы поездки",
+            description = "Возвращает список всех расходов указанной поездки, их общую сумму и количество расходов.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Список расходов успешно получен",
+                    content = @Content(
+                            schema = @Schema(implementation = TravelExpensesResponseDTO.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "Пользователь не является участником поездки",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Поездка не найдена",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
+    })
+    @GetMapping()
+    @ResponseStatus(HttpStatus.OK)
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    public TravelExpensesResponseDTO getTravelExpenses(@Parameter(description = "ID поездки", example = "8")
+                                                       @PathVariable Long travelId,
+                                                       @AuthenticationPrincipal UserPrincipal principal) {
+
+        return expenseService.getAllExpensesInTravel(travelId);
     }
 }
