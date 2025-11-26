@@ -31,7 +31,6 @@ public class TravelController {
     private final TravelService travelService;
     private final TravelMemberService travelMemberService;
 
-    @PostMapping()
     @Operation(
             summary = "Создать новую поездку",
             description = "Создает новую поездку и назначает создателя владельцем",
@@ -45,14 +44,13 @@ public class TravelController {
             @ApiResponse(responseCode = "403", description = "Неавторизованный доступ",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PostMapping("/create")
+    @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
     public TravelResponse create(@Valid @RequestBody CreateTravelRequest request,
                                  @AuthenticationPrincipal UserPrincipal principal) {
         return travelService.createTravel(request, principal.getId());
     }
 
-    @GetMapping()
     @Operation(
             summary = "Получить мои поездки",
             description = "Возвращает список всех поездок, в которых участвует пользователь",
@@ -64,7 +62,7 @@ public class TravelController {
             @ApiResponse(responseCode = "403", description = "Неавторизованный доступ",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @GetMapping("/my")
+    @GetMapping()
     @ResponseStatus(HttpStatus.OK)
     public MyTravelsResponse getMyTravels(@AuthenticationPrincipal UserPrincipal principal) {
         return travelMemberService.getMyTravels(principal.getId());
