@@ -21,6 +21,7 @@ import java.util.Set;
  */
 
 @Builder
+@Schema(description = "DTO для отображения информации о трате")
 public record ExpenseResponseDTO(
         @Schema(description = "ID траты", example = "123") Long id,
         @Schema(description = "ID плательщика", example = "45") Long payerId,

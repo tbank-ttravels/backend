@@ -10,5 +10,5 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
     Optional<Expense> findByIdAndTravelId(Long id, Long travelId);
 
-    List<Expense> findAllByTravelId(Long travelId);
+    List<Expense> findAllByTravelIdOrderByDateDesc(Long travelId);
 }

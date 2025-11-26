@@ -117,7 +117,7 @@ public class ExpenseAnalyticsService {
      */
     private Map<Long, List<Expense>> loadAndGroupExpensesByCategory(Long travelId) {
 
-        var expenses = expenseService.findAllExpenseInTravel(travelId);
+        var expenses = expenseService.findAllExpensesInTravel(travelId);
         var expensesByCategory = new HashMap<Long, List<Expense>>();
 
         for (var expense : expenses) {
