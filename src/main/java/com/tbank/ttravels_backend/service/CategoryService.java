@@ -1,6 +1,9 @@
 package com.tbank.ttravels_backend.service;
 
-import com.tbank.ttravels_backend.dto.category.*;
+import com.tbank.ttravels_backend.dto.category.CategoriesListResponse;
+import com.tbank.ttravels_backend.dto.category.CategoryResponse;
+import com.tbank.ttravels_backend.dto.category.CreateCategoryRequest;
+import com.tbank.ttravels_backend.dto.category.EditCategoryRequest;
 import com.tbank.ttravels_backend.dto.category.validator.CategoryValidator;
 import com.tbank.ttravels_backend.entity.Category;
 import com.tbank.ttravels_backend.entity.Travel;
@@ -22,11 +25,11 @@ public class CategoryService {
     private final TravelRepository travelRepository;
 
     @Transactional
-    public CategoryResponse create(CreateCategoryRequest req) {
+    public CategoryResponse create(Long travelId, CreateCategoryRequest req) {
 
         CategoryValidator.validateCreate(req);
 
-        Travel travel = travelRepository.findById(req.getTravelId())
+        Travel travel = travelRepository.findById(travelId)
                 .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
 
         Category category = Category.builder()
