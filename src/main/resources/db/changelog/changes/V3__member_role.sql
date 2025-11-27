@@ -1,14 +1,7 @@
-DO
-$$
-    BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'member_role') THEN
-            CREATE TYPE member_role AS ENUM ('MEMBER', 'OWNER');
-        END IF;
-    END
-$$;
+CREATE TYPE member_role AS ENUM ('MEMBER', 'OWNER');
 
 ALTER TABLE travel_members
-    ADD COLUMN IF NOT EXISTS role member_role NOT NULL DEFAULT 'MEMBER';
+    ADD COLUMN role member_role NOT NULL DEFAULT 'MEMBER';
 
 UPDATE travel_members tm
 SET role = 'OWNER'
