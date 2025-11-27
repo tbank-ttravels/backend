@@ -123,7 +123,7 @@ public class TravelMemberService {
     }
 
     public User findUserInTravel(Long userId, Long travelId) {
-        return travelMemberRepository.findByUserIdAndTravelId(userId, travelId)
+        return travelMemberRepository.findByUserIdAndTravelIdAndStatus(userId, travelId, MemberStatus.ACCEPTED)
                 .orElseThrow(() ->
                         new UserNotFoundInTravelException("Пользователь с id = " + userId +
                                 " не найден в поездке с id = " + travelId))
@@ -131,7 +131,7 @@ public class TravelMemberService {
     }
 
     public void checkUserInTravel(Long userId, Long travelId) {
-        if (!travelMemberRepository.existsByUserIdAndTravelId(userId, travelId))
+        if (!travelMemberRepository.existsByTravelIdAndUserIdAndStatus(travelId, userId, MemberStatus.ACCEPTED))
             throw new UserNotFoundInTravelException("Пользователь с id = " + userId +
                     " не найден в поездке с id = " + travelId);
     }
