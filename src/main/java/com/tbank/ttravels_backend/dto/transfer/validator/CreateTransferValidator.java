@@ -6,9 +6,6 @@ import com.tbank.ttravels_backend.exception.Validation;
 public class CreateTransferValidator {
 
     public static void validateCreate(CreateTransferRequest request) {
-        if (request.getTravelId() == null) {
-            throw new Validation("travelId обязателен");
-        }
         if (request.getSenderId() == null) {
             throw new Validation("senderId обязателен");
         }
