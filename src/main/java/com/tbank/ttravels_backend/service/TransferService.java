@@ -27,10 +27,10 @@ public class TransferService {
     private final TravelMemberService travelMemberService;
 
     @Transactional
-    public TransferResponse createTransfer(CreateTransferRequest request) {
+    public TransferResponse createTransfer(Long travelId, CreateTransferRequest request) {
         CreateTransferValidator.validateCreate(request);
 
-        Travel travel = travelService.findTravel(request.getTravelId());
+        Travel travel = travelService.findTravel(travelId);
 
         User sender = travelMemberService.findUserInTravel(request.getSenderId(), travel.getId());
         User recipient = travelMemberService.findUserInTravel(request.getRecipientId(), travel.getId());

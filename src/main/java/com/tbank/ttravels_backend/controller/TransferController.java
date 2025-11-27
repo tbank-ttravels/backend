@@ -5,15 +5,15 @@ import com.tbank.ttravels_backend.dto.transfer.EditTransferRequest;
 import com.tbank.ttravels_backend.dto.transfer.TransferResponse;
 import com.tbank.ttravels_backend.dto.transfer.TransfersListResponse;
 import com.tbank.ttravels_backend.security.UserPrincipal;
-import com.tbank.ttravels_backend.security.TravelSecurityService;
 import com.tbank.ttravels_backend.service.TransferService;
+import com.tbank.ttravels_backend.service.TravelSecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/transfers")
+@RequestMapping("/travels/{travelId}/transfers")
 @RequiredArgsConstructor
 public class TransferController {
 
@@ -21,28 +21,30 @@ public class TransferController {
     private final TravelSecurityService travelSecurity;
 
     @PostMapping
-    @PreAuthorize("@travelSecurity.isMember(#request.travelId, #user.id)")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     public TransferResponse create(
-            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable Long travelId,
+            @AuthenticationPrincipal UserPrincipal principal,
             @RequestBody CreateTransferRequest request
     ) {
-        return transferService.createTransfer(request);
+        return transferService.createTransfer(travelId, request);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@travelSecurity.isMember(@transferRepository.findById(#id).get().travel.id, #user.id)")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     public TransferResponse edit(
-            @AuthenticationPrincipal UserPrincipal user,
+            @PathVariable Long travelId,
+            @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long id,
             @RequestBody EditTransferRequest request
     ) {
         return transferService.editTransfer(id, request);
     }
 
-    @GetMapping("/{travelId}/transfers")
-    @PreAuthorize("@travelSecurity.isMember(#travelId, #user.id)")
+    @GetMapping()
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
     public TransfersListResponse getTransfers(
-            @AuthenticationPrincipal UserPrincipal user,
+            @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long travelId
     ) {
         return transferService.getTransfersByTravel(travelId);
