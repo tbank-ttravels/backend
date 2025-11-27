@@ -36,7 +36,7 @@ public class CategoryController {
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestBody EditCategoryRequest request
     ) {
-        return categoryService.edit(id, request);
+        return categoryService.edit(travelId, id, request);
     }
 
     @GetMapping()

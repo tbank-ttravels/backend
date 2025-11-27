@@ -49,11 +49,11 @@ public class CategoryService {
     }
 
     @Transactional
-    public CategoryResponse edit(Long id, EditCategoryRequest req) {
+    public CategoryResponse edit(Long travelId, Long id, EditCategoryRequest req) {
 
         CategoryValidator.validateEdit(req.getName());
 
-        Category category = categoryRepository.findById(id)
+        Category category = categoryRepository.findByIdAndTravel_Id(id, travelId)
                 .orElseThrow(() -> new CategoryNotFoundException("Категория не найдена"));
 
         category.setName(req.getName());

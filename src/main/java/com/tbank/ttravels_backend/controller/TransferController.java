@@ -38,7 +38,7 @@ public class TransferController {
             @PathVariable Long id,
             @RequestBody EditTransferRequest request
     ) {
-        return transferService.editTransfer(id, request);
+        return transferService.editTransfer(travelId, id, request);
     }
 
     @GetMapping()

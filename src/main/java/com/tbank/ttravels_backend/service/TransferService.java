@@ -49,10 +49,10 @@ public class TransferService {
     }
 
     @Transactional
-    public TransferResponse editTransfer(Long transferId, EditTransferRequest request) {
+    public TransferResponse editTransfer(Long travelId, Long transferId, EditTransferRequest request) {
         EditTransferValidator.validate(request);
 
-        Transfer transfer = transferRepository.findById(transferId)
+        Transfer transfer = transferRepository.findByIdAndTravel_Id(transferId, travelId)
                 .orElseThrow(() -> new TransferNotFound("Перевод не найден"));
 
         transfer.setSum(request.getSum());
