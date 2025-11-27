@@ -1,11 +1,15 @@
 package com.tbank.ttravels_backend.dto.transfer;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-@Getter
+@Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class TransferResponse {
     private Long id;
     private Long travelId;

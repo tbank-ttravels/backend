@@ -27,10 +27,10 @@ public class TransferService {
     private final TravelMemberService travelMemberService;
 
     @Transactional
-    public TransferResponse createTransfer(CreateTransferRequest request) {
+    public TransferResponse createTransfer(Long travelId, CreateTransferRequest request) {
         CreateTransferValidator.validateCreate(request);
 
-        Travel travel = travelService.findTravel(request.getTravelId());
+        Travel travel = travelService.findTravel(travelId);
 
         User sender = travelMemberService.findUserInTravel(request.getSenderId(), travel.getId());
         User recipient = travelMemberService.findUserInTravel(request.getRecipientId(), travel.getId());
@@ -49,10 +49,10 @@ public class TransferService {
     }
 
     @Transactional
-    public TransferResponse editTransfer(Long transferId, EditTransferRequest request) {
+    public TransferResponse editTransfer(Long travelId, Long transferId, EditTransferRequest request) {
         EditTransferValidator.validate(request);
 
-        Transfer transfer = transferRepository.findById(transferId)
+        Transfer transfer = transferRepository.findByIdAndTravel_Id(transferId, travelId)
                 .orElseThrow(() -> new TransferNotFound("Перевод не найден"));
 
         transfer.setSum(request.getSum());

@@ -1,11 +1,15 @@
 package com.tbank.ttravels_backend.dto.transfer;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 
-@Getter @Setter
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class CreateTransferRequest {
-    private Long travelId;
     private Long senderId;
     private Long recipientId;
     private BigDecimal sum;

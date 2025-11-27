@@ -29,4 +29,6 @@ public interface TravelMemberRepository extends JpaRepository<TravelMember, Long
     boolean existsByTravelIdAndUserId(Long travelId, Long id);
 
     Optional<TravelMember> findByIdAndUserIdAndStatus(Long Id, Long userId, MemberStatus status);
+
+    Optional<TravelMember> findByUserIdAndTravelIdAndStatus(Long userId, Long travelId, MemberStatus status);
 }
