@@ -1,22 +1,25 @@
-package com.tbank.ttravels_backend.security;
+package com.tbank.ttravels_backend.service;
 
-import com.tbank.ttravels_backend.dto.auth.AccountResponse;
-import com.tbank.ttravels_backend.dto.auth.AuthResponse;
-import com.tbank.ttravels_backend.dto.auth.ChangePasswordRequest;
-import com.tbank.ttravels_backend.dto.auth.RefreshOrLogoutRequest;
+import com.tbank.ttravels_backend.dto.auth.*;
 import com.tbank.ttravels_backend.entity.PasswordCredential;
 import com.tbank.ttravels_backend.entity.RefreshToken;
 import com.tbank.ttravels_backend.entity.User;
 import com.tbank.ttravels_backend.exception.InvalidCredentialsException;
 import com.tbank.ttravels_backend.exception.RefreshTokenNotFoundException;
+import com.tbank.ttravels_backend.exception.UserNotFoundByPhoneException;
 import com.tbank.ttravels_backend.exception.UserNotFoundException;
 import com.tbank.ttravels_backend.repository.PasswordCredentialRepository;
 import com.tbank.ttravels_backend.repository.RefreshTokenRepository;
 import com.tbank.ttravels_backend.repository.UserRepository;
+import com.tbank.ttravels_backend.security.TokenHashService;
+import com.tbank.ttravels_backend.security.TokenIssuer;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -49,7 +52,7 @@ public class AccountService {
     }
 
     @Transactional
-    public void logout(Long userId, RefreshOrLogoutRequest request) {
+    public void logout(Long userId, LogoutRequest request) {
         String tokenHash = tokenHashService.hash(request.getRefreshToken());
         RefreshToken token = refreshTokenRepository.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new RefreshTokenNotFoundException("Refresh token не найден"));
@@ -63,7 +66,7 @@ public class AccountService {
     }
 
     @Transactional
-    public AuthResponse refresh(RefreshOrLogoutRequest request) {
+    public AuthResponse refresh(RefreshRequest request) {
         String tokenHash = tokenHashService.hash(request.getRefreshToken());
         RefreshToken storedToken = refreshTokenRepository.findByTokenHash(tokenHash)
                 .orElseThrow(() -> new RefreshTokenNotFoundException("Refresh token не найден"));
@@ -73,7 +76,22 @@ public class AccountService {
 
     public AccountResponse getCurrentUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с id = " + userId + " не найден"));
         return new AccountResponse(user.getPhone(), user.getName(), user.getSurname());
+    }
+
+    public User findUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с id = " + userId + " не найден"));
+    }
+
+    public List<User> findUsers(Set<Long> userIds) {
+        return this.userRepository.findAllById(userIds);
+    }
+
+    public User findUserByPhone(String phone) {
+        return userRepository.findByPhone(phone)
+                .orElseThrow(() ->
+                        new UserNotFoundByPhoneException("Пользователь с phone = " + phone + " не найден"));
     }
 }

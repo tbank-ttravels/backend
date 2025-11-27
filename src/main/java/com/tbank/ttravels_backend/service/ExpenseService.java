@@ -4,11 +4,15 @@ package com.tbank.ttravels_backend.service;
 import com.tbank.ttravels_backend.dto.expense_update.ExpenseUpdateRequestDTO;
 import com.tbank.ttravels_backend.dto.exspense.ExpenseRequestDTO;
 import com.tbank.ttravels_backend.dto.exspense.ExpenseResponseDTO;
+import com.tbank.ttravels_backend.dto.exspense.TravelExpensesResponseDTO;
 import com.tbank.ttravels_backend.entity.*;
 import com.tbank.ttravels_backend.exception.*;
+import com.tbank.ttravels_backend.factory.ExpenseFactory;
+import com.tbank.ttravels_backend.factory.MemberExpenseFactory;
 import com.tbank.ttravels_backend.mapper.ExpenseDtoMapper;
 import com.tbank.ttravels_backend.repository.ExpenseRepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -21,31 +25,20 @@ import java.util.stream.Collectors;
 
 
 // TODO батч операции
+// TODO вернуть список всех трат
+// TODO долги
 @Service
+@RequiredArgsConstructor
 public class ExpenseService {
     private final ExpenseRepository expenseRepository;
-    private final ReferenceLookupService referenceLookupService;
+
+    private final MemberExpenseService memberExpenseService;
+    private final TravelMemberService travelMemberService;
+    private final CategoryService categoryService;
+    private final UserService userService;
     private final ExpenseDtoMapper expenseDtoMapper;
+    private final TravelService travelService;
 
-
-    /**
-     * Конструктор сервиса ExpenseService.
-     *
-     * @param expenseRepository      репозиторий для работы с сущностью Expense
-     * @param referenceLookupService сервис для проверки участия пользователей, поездок и категорий
-     * @param expenseDtoMapper       маппер для преобразования сущности Expense в DTO
-     */
-    public ExpenseService(ExpenseRepository expenseRepository,
-                          ReferenceLookupService referenceLookupService,
-                          ExpenseDtoMapper expenseDtoMapper) {
-        this.expenseRepository = expenseRepository;
-        this.referenceLookupService = referenceLookupService;
-        this.expenseDtoMapper = expenseDtoMapper;
-    }
-
-
-    // TODO более одного плательщика
-    // TODO дублирование в мапе участников
 
     /**
      * Создаёт новую трату в указанной поездке.
@@ -73,34 +66,32 @@ public class ExpenseService {
      * @throws UserNotFoundInTravelException    если плательщик не является участником поездки.
      * @throws TravelNotFoundException          если поездка с travelId не найдена.
      * @throws CategoryNotFoundException        если категория с указанным id не найдена.
+     * @throws DuplicateExpenseException        если трата уже добавлена, или участник траты уже в трате
      */
     @Transactional
     public ExpenseResponseDTO createExpense(ExpenseRequestDTO expenseRequestDTO, Long travelId) {
 
         validateExpenseRequestDTO(expenseRequestDTO, travelId);
 
-        Category category = referenceLookupService.findCategory(expenseRequestDTO.getCategoryId());
-        Travel travel = referenceLookupService.findTravel(travelId);
+        Category category = this.categoryService.findCategory(expenseRequestDTO.getCategoryId());
+        Travel travel = travelService.findTravel(travelId);
 
-        User payer = referenceLookupService.findUserInTravel(expenseRequestDTO.getPayerId(), travelId);
+        User payer = travelMemberService.findUserInTravel(expenseRequestDTO.getPayerId(), travelId);
 
         BigDecimal sum = calculateSum(expenseRequestDTO.getParticipantShares().values());
 
-        Expense expense = Expense.create(
-                expenseRequestDTO.getName(),
+        Expense expense = ExpenseFactory.create(expenseRequestDTO.getName(),
                 expenseRequestDTO.getDescription(),
                 sum,
                 expenseRequestDTO.getDate(),
                 category,
-                payer,
-                travel
-        );
+                payer);
+
+        travelService.addExpense(travel, expense);
 
         distributeExpenseShares(expense,
                 expenseRequestDTO.getParticipantShares(),
                 payer.getId());
-
-        expenseRepository.save(expense);
 
         return expenseDtoMapper.createExpenseResponseDTO(expense);
     }
@@ -116,16 +107,15 @@ public class ExpenseService {
      */
     private void validateExpenseRequestDTO(ExpenseRequestDTO expenseRequestDTO, Long travelId) {
 
-        if (expenseRequestDTO.getParticipantShares() == null || expenseRequestDTO.getParticipantShares().isEmpty()) {
-            throw new InvalidParticipantShareException();
+        if (expenseRequestDTO.getParticipantShares().isEmpty()) {
+            throw new InvalidParticipantShareException("Трата должена содержать хотя бы одного участника");
         }
 
         // Все ли являются участниками поездки?
-        referenceLookupService.validateAllUsersInTravel(travelId, expenseRequestDTO.getParticipantShares().keySet());
+        travelMemberService.validateAllUsersInTravel(travelId, expenseRequestDTO.getParticipantShares().keySet());
 
         // Есть ли в участниках платящий?
         validatePayerInParticipants(expenseRequestDTO.getPayerId(), expenseRequestDTO.getParticipantShares().keySet());
-
 
         // Валидация долей
         validateShares(expenseRequestDTO.getParticipantShares());
@@ -146,9 +136,9 @@ public class ExpenseService {
 
         for (Map.Entry<Long, BigDecimal> entry : participantShares.entrySet()) {
             if (entry.getValue() == null)
-                throw new InvalidParticipantShareException(entry.getKey(), "Доля участника не может быть пустой");
+                throw new InvalidParticipantShareException("Доля участника с id = " + entry.getKey() + " не может быть пустой");
             if (entry.getValue().signum() <= 0)
-                throw new InvalidParticipantShareException(entry.getKey(), "Доля участника должна быть положительной");
+                throw new InvalidParticipantShareException("Доля участника с id = " + entry.getKey() + " должна быть положительной");
         }
     }
 
@@ -159,7 +149,7 @@ public class ExpenseService {
     private void validatePayerInParticipants(Long payerId, Set<Long> participantUserIds) {
 
         if (participantUserIds != null && !participantUserIds.contains(payerId)) {
-            throw new PayerNotInParticipantsException(payerId);
+            throw new PayerNotInParticipantsException("Плательщик должен участвовать в трате id = " + payerId);
         }
     }
 
@@ -192,19 +182,19 @@ public class ExpenseService {
                                          Long payerId) {
 
         if (participantShares != null) {
-            for (Map.Entry<Long, BigDecimal> entry : participantShares.entrySet()) {
+            for (Map.Entry<Long, BigDecimal> participantShare : participantShares.entrySet()) {
 
-                User participant = referenceLookupService.findUserInTravel(entry.getKey(), expense.getTravel().getId());
+                User participant = travelMemberService.findUserInTravel(participantShare.getKey(), expense.getTravel().getId());
 
                 MemberExpense memberExpense;
 
                 if (participant.getId().equals(payerId)) {
-                    memberExpense = MemberExpense.create(participant, entry.getValue());
+                    memberExpense = MemberExpenseFactory.create(participant, participantShare.getValue());
                 } else {
-                    memberExpense = MemberExpense.create(participant, entry.getValue().negate());
+                    memberExpense = MemberExpenseFactory.create(participant, participantShare.getValue().negate());
                 }
 
-                expense.addMemberExpense(memberExpense);
+                memberExpenseService.addMemberExpense(expense, memberExpense);
             }
         }
     }
@@ -219,13 +209,15 @@ public class ExpenseService {
      * @param travelId  идентификатор поездки
      * @param expenseId идентификатор траты для удаления
      * @throws ExpenseNotFoundInTravelException если трата не найдена в поездке
-     * @throws UserNotFoundInTravelException    если пользователь не участвует в поездке
+     * @throws TravelNotFoundException          если поездка не найдена
      */
+    @Transactional
     public void deleteExpense(Long travelId, Long expenseId) {
 
         Expense expense = this.findExpenseInTravel(expenseId, travelId);
+        Travel travel = travelService.findTravel(travelId);
 
-        expenseRepository.delete(expense);
+        travelService.removeExpense(travel, expense);
     }
 
 
@@ -239,11 +231,9 @@ public class ExpenseService {
      */
     public Expense findExpenseInTravel(Long expenseId, Long travelId) {
 
-        // TODO нужнен ли?
-        referenceLookupService.findTravel(travelId);
-
         return expenseRepository.findByIdAndTravelId(expenseId, travelId)
-                .orElseThrow(() -> new ExpenseNotFoundInTravelException(expenseId, travelId));
+                .orElseThrow(() -> new ExpenseNotFoundInTravelException("Трата с id = " +
+                        expenseId + " не найдена в поездке с id = " + travelId));
     }
 
 
@@ -277,8 +267,8 @@ public class ExpenseService {
 
         // Если DTO пустое, обновлять нечего
         if (!this.hasAnyField(expenseUpdateRequestDTO)) {
-            // TODO корректнее обработать
-            throw new EmptyUpdateRequestException();
+
+            throw new EmptyUpdateRequestException("Отсутствуют поля для обновления траты");
         }
 
         // Переданы ли участники
@@ -308,7 +298,7 @@ public class ExpenseService {
                 !expenseUpdateRequestDTO.payerId().equals(expense.getPayer().getId())) {
             updatePayer(
                     expense,
-                    referenceLookupService.findUserInTravel(
+                    travelMemberService.findUserInTravel(
                             expenseUpdateRequestDTO.payerId(),
                             travelId));
         }
@@ -390,7 +380,7 @@ public class ExpenseService {
         }
 
         if (categoryId != null) {
-            expense.setCategory(referenceLookupService.findCategory(categoryId));
+            expense.setCategory(this.categoryService.findCategory(categoryId));
         }
 
         if (date != null) {
@@ -450,36 +440,15 @@ public class ExpenseService {
 
         if (participantShares != null && !participantShares.isEmpty()) {
 
-            Set<Long> missingUsers = findMissingUsersInExpense(expense, participantShares.keySet());
-            if (!missingUsers.isEmpty()) {
-                throw new UsersNotFoundInExpenseException(missingUsers, expense.getName());
+            var participants = expense.getMemberExpenses().stream()
+                    .map(me -> me.getParticipant().getId()).collect(Collectors.toSet());
+            for (var id : participantShares.keySet()) {
+                if (!participants.contains(id))
+                    throw new UserNotFoundExpenseException("Пользователь с id = " + id +
+                            " не является участником траты '" + expense.getName() + "'");
             }
             validateShares(participantShares);
         }
-    }
-
-
-    /**
-     * Возвращает множество ID пользователей, которые отсутствуют среди участников данной траты.
-     * <p>
-     * Метод предварительно кэширует ID всех участников траты для оптимизации проверки.
-     * Позволяет гибко обрабатывать ситуацию с отсутствующими участниками (например, выбросить исключение
-     * или просто логировать).
-     *
-     * @param expense текущая трата
-     * @param usersId коллекция идентификаторов пользователей для проверки
-     * @return множество ID пользователей, которые отсутствуют в тратах
-     */
-    private Set<Long> findMissingUsersInExpense(Expense expense, Collection<Long> usersId) {
-
-        // Кэширую ID
-        Set<Long> membersExpenseIds = expense.getMemberExpenses().stream()
-                .map(me -> me.getParticipant().getId())
-                .collect(Collectors.toSet());
-
-        return usersId.stream()
-                .filter(id -> !membersExpenseIds.contains(id))
-                .collect(Collectors.toSet());
     }
 
 
@@ -497,32 +466,42 @@ public class ExpenseService {
      * @return актуальный ExpenseResponseDTO после удаления участников
      * @throws EmptyParticipantsListException        если participantsId пустой
      * @throws CannotRemovePayerFromExpenseException если пытаются удалить плательщика
-     * @throws UsersNotFoundInExpenseException       если указанные участники не найдены в тратах
+     * @throws UserNotFoundExpenseException          если участник не найден в трате
      */
     @Transactional
     public ExpenseResponseDTO deleteParticipantsFromExpense(Long travelId, Long expenseId, Set<Long> participantsId) {
 
         if (participantsId == null || participantsId.isEmpty()) {
-            throw new EmptyParticipantsListException();
+            throw new EmptyParticipantsListException("Список участников для удаления из траты пуст");
         }
 
         Expense expense = this.findExpenseInTravel(expenseId, travelId);
 
-        Set<Long> missingUsers = findMissingUsersInExpense(expense, participantsId);
-        if (!missingUsers.isEmpty()) {
-            throw new UsersNotFoundInExpenseException(missingUsers, expense.getName());
+        var participantsIdInExpense = expense.getMemberExpenses().stream()
+                .map(me -> me.getParticipant().getId())
+                .collect(Collectors.toSet());
+        for (Long id : participantsId) {
+            if (!participantsIdInExpense.contains(id)) {
+                throw new UserNotFoundExpenseException("Невозможно удалить пользователя с id = " + id +
+                        ", так как его нет в трате '" + expense.getName() + "'");
+            }
         }
 
         if (participantsId.contains(expense.getPayer().getId())) {
-            throw new CannotRemovePayerFromExpenseException(expense.getPayer().getId(), expense.getName());
+            throw new CannotRemovePayerFromExpenseException("Невозможно удалить плательщикас с id = " +
+                    expense.getPayer().getId() + " из траты '" + expense.getName() + "'");
         }
 
-        getMemberExpensesForIds(expense, participantsId).forEach(expense::removeMemberExpense);
+        getMemberExpensesForIds(expense, participantsId).forEach(me ->
+                memberExpenseService.removeMemberExpense(expense, me));
 
-        expense.setSum(calculateSum(expense.getMemberExpenses()
-                .stream()
-                .map(MemberExpense::getShare)
-                .toList()));
+        expense.setSum(
+                calculateSum(
+                        expense.getMemberExpenses().stream()
+                                .map(me -> me.getShare().abs())
+                                .toList()
+                )
+        );
 
         return expenseDtoMapper.createExpenseResponseDTO(expense);
     }
@@ -548,27 +527,27 @@ public class ExpenseService {
      * <p>
      * Для каждого нового участника создается объект MemberExpense с отрицательной долей
      * (отражающей долг участника), после чего он добавляется в трату и пересчитывается общая сумма.
-     *
+     * <p>
      * Проверки:
      * - participantShares не может быть null или пустым.
      * - Все пользователи должны быть участниками поездки.
      * - Новые участники не должны дублировать уже существующих в этой трате.
      * - Доли участников должны быть валидными (не null, > 0).
      *
-     * @param travelId идентификатор поездки
-     * @param expenseId идентификатор траты
+     * @param travelId          идентификатор поездки
+     * @param expenseId         идентификатор траты
      * @param participantShares карта "id пользователя → доля" для добавления
      * @return ExpenseResponseDTO с обновленной информацией о трате
-     * @throws EmptyParticipantsListException если participantShares null или пустая
-     * @throws UserNotFoundInTravelException если один или несколько пользователей не являются участниками поездки
-     * @throws DuplicateParticipantException если один или несколько участников уже есть в этой трате
+     * @throws EmptyParticipantsListException   если participantShares null или пустая
+     * @throws UserNotFoundInTravelException    если один или несколько пользователей не являются участниками поездки
+     * @throws DuplicateParticipantException    если один или несколько участников уже есть в этой трате
      * @throws InvalidParticipantShareException если доля одного из участников некорректна
      */
     @Transactional
     public ExpenseResponseDTO addParticipantsToExpense(Long travelId, Long expenseId, Map<Long, BigDecimal> participantShares) {
 
         if (participantShares == null || participantShares.isEmpty()) {
-            throw new EmptyParticipantsListException();
+            throw new EmptyParticipantsListException("Список участников для добавления в трату пуст");
         }
 
         this.validateShares(participantShares);
@@ -576,15 +555,15 @@ public class ExpenseService {
         Expense expense = this.findExpenseInTravel(expenseId, travelId);
 
         // Все ли являются участниками поездки?
-        referenceLookupService.validateAllUsersInTravel(travelId, participantShares.keySet());
+        travelMemberService.validateAllUsersInTravel(travelId, participantShares.keySet());
 
         ensureParticipantsAreNew(expense, participantShares.keySet());
 
-        List<MemberExpense> newParticipants = referenceLookupService.getUsers(participantShares.keySet()).stream()
-                .map(user -> MemberExpense.create(user, participantShares.get(user.getId()).negate()))
+        List<MemberExpense> newParticipants = this.userService.getUsers(participantShares.keySet()).stream()
+                .map(user -> MemberExpenseFactory.create(user, participantShares.get(user.getId()).negate()))
                 .toList();
 
-        newParticipants.forEach(expense::addMemberExpense);
+        newParticipants.forEach(me -> memberExpenseService.addMemberExpense(expense, me));
 
         expense.setSum(expense.getSum().add(calculateSum(participantShares.values())));
 
@@ -592,12 +571,11 @@ public class ExpenseService {
     }
 
 
-
     /**
      * Проверяет, что среди переданных идентификаторов участников нет дубликатов
      * относительно уже существующих участников данной траты.
      *
-     * @param expense текущая трата
+     * @param expense           текущая трата
      * @param newParticipantIds идентификаторы новых участников
      * @throws DuplicateParticipantException если один или несколько идентификаторов уже присутствуют в тратах
      */
@@ -612,7 +590,52 @@ public class ExpenseService {
                 .collect(Collectors.toSet());
 
         if (!duplicates.isEmpty()) {
-            throw new DuplicateParticipantException(duplicates, expense.getName());
+            throw new DuplicateParticipantException("В трате '" + expense.getName() + "'" +
+                    " уже участвует пользователь с id: " +
+                    duplicates.stream().sorted()
+                            .map(Object::toString)
+                            .collect(Collectors.joining(", ")));
         }
+    }
+
+
+    /**
+     * Возвращает все расходы указанной поездки в виде DTO с общей суммой и количеством расходов.
+     *
+     * @param travelId идентификатор поездки
+     * @return DTO с суммой всех расходов, количеством и списком расходов
+     * @throws TravelNotFoundException если поездка с указанным travelId не найдена
+     */
+    public TravelExpensesResponseDTO getAllExpensesInTravel(Long travelId) {
+
+        travelService.checkTravel(travelId);
+
+        List<Expense> expenses = findAllExpensesInTravel(travelId);
+
+        List<ExpenseResponseDTO> expensesDTO = expenses.stream()
+                .map(expenseDtoMapper::createExpenseResponseDTO)
+                .toList();
+
+        BigDecimal amount = expensesDTO.stream()
+                .map(ExpenseResponseDTO::sum)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return TravelExpensesResponseDTO.builder()
+                .expenses(expensesDTO)
+                .totalAmount(amount)
+                .totalCount(expensesDTO.size())
+                .build();
+    }
+
+
+    /**
+     * Возвращает все расходы указанной поездки в виде DTO с общей суммой и количеством расходов.
+     *
+     * @param travelId идентификатор поездки
+     * @return DTO с суммой всех расходов, количеством и списком расходов
+     */
+    public List<Expense> findAllExpensesInTravel(Long travelId) {
+
+        return expenseRepository.findAllByTravelIdOrderByDateDesc(travelId);
     }
 }

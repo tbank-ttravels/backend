@@ -28,7 +28,7 @@ public class ExpenseDtoMapper {
     }
 
 
-    public Set<MemberExpenseResponseDTO> createSetParticipantsResponseDTO(Set<MemberExpense> memberExpenses) {
+    private Set<MemberExpenseResponseDTO> createSetParticipantsResponseDTO(Set<MemberExpense> memberExpenses) {
 
         if (memberExpenses == null) {
             return Set.of();
@@ -40,7 +40,7 @@ public class ExpenseDtoMapper {
     }
 
 
-    public MemberExpenseResponseDTO createMemberExpenseResponseDTO(MemberExpense memberExpense) {
+    private MemberExpenseResponseDTO createMemberExpenseResponseDTO(MemberExpense memberExpense) {
         return MemberExpenseResponseDTO.builder()
                 .surname(memberExpense.getParticipant().getSurname())
                 .userId(memberExpense.getParticipant().getId())

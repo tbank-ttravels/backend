@@ -69,4 +69,13 @@ public class CategoryService {
 
         return new CategoriesListResponse(items);
     }
+
+    public List<Category> findAllCategoryInTravel(Long travelId) {
+        return this.categoryRepository.findAllByTravel_Id(travelId);
+    }
+    public Category findCategory(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() ->
+                        new CategoryNotFoundException("Категория с id = " + categoryId + " не найдена"));
+    }
 }

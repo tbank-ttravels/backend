@@ -1,165 +1,176 @@
 package com.tbank.ttravels_backend.service;
 
-import com.tbank.ttravels_backend.dto.travel.*;
-import com.tbank.ttravels_backend.entity.Travel;
-import com.tbank.ttravels_backend.entity.TravelMember;
-import com.tbank.ttravels_backend.entity.User;
-import com.tbank.ttravels_backend.enums.MemberRole;
-import com.tbank.ttravels_backend.enums.MemberStatus;
+import com.tbank.ttravels_backend.dto.travel.CreateTravelRequest;
+import com.tbank.ttravels_backend.dto.travel.EditTravelRequest;
+import com.tbank.ttravels_backend.dto.travel.TravelResponse;
+import com.tbank.ttravels_backend.entity.*;
 import com.tbank.ttravels_backend.enums.TravelStatus;
-import com.tbank.ttravels_backend.exception.*;
+import com.tbank.ttravels_backend.exception.ConflictStateException;
+import com.tbank.ttravels_backend.exception.DuplicateExpenseException;
+import com.tbank.ttravels_backend.exception.InvalidDateRangeException;
+import com.tbank.ttravels_backend.exception.TravelNotFoundException;
 import com.tbank.ttravels_backend.factory.TravelFactory;
+import com.tbank.ttravels_backend.factory.TravelMemberFactory;
 import com.tbank.ttravels_backend.mapper.TravelMapper;
 import com.tbank.ttravels_backend.repository.TravelMemberRepository;
 import com.tbank.ttravels_backend.repository.TravelRepository;
-import com.tbank.ttravels_backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
-import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class TravelService {
 
-    private final UserRepository userRepository;
     private final TravelRepository travelRepository;
     private final TravelMemberRepository travelMemberRepository;
-    private final TravelFactory travelFactory;
     private final TravelMapper travelMapper;
+    private final AccountService accountService;
 
     @Transactional
     public TravelResponse createTravel(CreateTravelRequest request, Long userId) {
-        User owner = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден"));
+        User owner = accountService.findUser(userId);
 
-        Travel travel = travelRepository.save(travelFactory.createTravel(request, owner));
-        travelMemberRepository.save(travelFactory.ownerMembership(travel, owner));
+
+        Travel newTravel = TravelFactory.createTravel(request, owner);
+
+        Set<TravelMember> members = newTravel.getTravelMembers();
+        members.add(TravelMemberFactory.createOwnerMember(newTravel, owner));
+
+        Travel travel = saveTravel(newTravel);
 
         return travelMapper.toTravelResponse(travel);
     }
 
-    @Transactional
-    public MyTravelsResponse getMyTravels(Long userId) {
-        List<Travel> travels = travelMemberRepository.findAllByUserIdAndStatus(userId, MemberStatus.ACCEPTED)
-                .stream()
-                .map(TravelMember::getTravel)
-                .toList();
-        return travelMapper.toMyTravelsResponse(travels);
-    }
-
-    @Transactional
     public TravelResponse getTravel(Long travelId) {
-        Travel travel = findTravelOrThrow(travelId);
+        Travel travel = findTravel(travelId);
         return travelMapper.toTravelResponse(travel);
     }
 
     @Transactional
     public TravelResponse editTravel(Long travelId, EditTravelRequest request) {
-        Travel travel = findTravelOrThrow(travelId);
+        Travel travel = findTravel(travelId);
 
         OffsetDateTime updatedStart = request.getStartDate() != null ? request.getStartDate() : travel.getStartDate();
         OffsetDateTime updatedEnd = request.getEndDate() != null ? request.getEndDate() : travel.getEndDate();
         validateDateRange(updatedStart, updatedEnd);
 
-        travelFactory.applyUpdates(travel, request);
-        Travel updated = travelRepository.save(travel);
+        applyUpdates(travel, request);
+        Travel updated = saveTravel(travel);
 
         return travelMapper.toTravelResponse(updated);
     }
 
     @Transactional
     public void closeTravel(Long travelId) {
-        Travel travel = findTravelOrThrow(travelId);
+        Travel travel = findTravel(travelId);
         if (travel.getStatus() == TravelStatus.CLOSED) {
             throw new ConflictStateException("Поездка уже закрыта");
         }
         travel.setStatus(TravelStatus.CLOSED);
-        travelRepository.save(travel);
+        saveTravel(travel);
     }
 
     @Transactional
     public void reopenTravel(Long travelId) {
-        Travel travel = findTravelOrThrow(travelId);
+        Travel travel = findTravel(travelId);
         if (travel.getStatus() == TravelStatus.ACTIVE) {
             throw new ConflictStateException("Поездка уже открыта");
         }
         travel.setStatus(TravelStatus.ACTIVE);
-        travelRepository.save(travel);
+        saveTravel(travel);
     }
 
     @Transactional
     public void deleteTravel(Long travelId) {
-        Travel travel = findTravelOrThrow(travelId);
+        Travel travel = findTravel(travelId);
         travelRepository.delete(travel);
     }
 
-    @Transactional
-    public void inviteMembers(Long travelId, List<String> phones) {
-        if (phones == null || phones.isEmpty()) {
-            return;
+    private void applyUpdates(Travel travel, EditTravelRequest request) {
+        if (request.getName() != null) {
+            travel.setName(request.getName());
         }
-
-        Travel travel = findTravelOrThrow(travelId);
-
-        phones.stream()
-                .map(String::trim)
-                .distinct()
-                .forEach(phone -> inviteSingleMember(travel, phone));
-    }
-
-    @Transactional
-    public InvitesResponse getInvites(Long userId) {
-        List<TravelMember> invites = travelMemberRepository
-                .findAllByUserIdAndStatus(userId, MemberStatus.INVITED);
-        return travelMapper.toInvitesResponse(invites);
-    }
-
-    @Transactional
-    public void respondToInvite(Long travelId, Long userId, boolean accept) {
-        TravelMember invite = travelMemberRepository
-                .findByTravelIdAndUserIdAndStatus(travelId, userId, MemberStatus.INVITED)
-                .orElseThrow(() -> new TravelNotFoundException("Приглашение не найдено"));
-
-        invite.setStatus(accept ? MemberStatus.ACCEPTED : MemberStatus.REJECTED);
-        travelMemberRepository.save(invite);
-    }
-
-    @Transactional
-    public TravelMembersResponse getTravelMembers(Long travelId) {
-        List<TravelMember> members = travelMemberRepository.findByTravelId(travelId);
-        return travelMapper.toMembersResponse(members);
-    }
-
-    @Transactional
-    public void kickMember(Long travelId, Long userId) {
-        TravelMember member = travelMemberRepository.findByTravelIdAndUserId(travelId, userId)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден в поездке"));
-
-        if (member.getRole() == MemberRole.OWNER) {
-            throw new OwnerRemovalNotAllowedException("Нельзя исключить владельца поездки");
+        if (request.getDescription() != null) {
+            travel.setDescription(request.getDescription());
         }
-
-        travelMemberRepository.delete(member);
-    }
-
-    @Transactional
-    public void leaveTravel(Long travelId, Long userId) {
-        TravelMember member = travelMemberRepository.findByTravelIdAndUserId(travelId, userId)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь не найден в поездке"));
-
-        if (member.getRole() == MemberRole.OWNER) {
-            throw new OwnerRemovalNotAllowedException("Владелец не может покинуть поездку");
+        if (request.getStartDate() != null) {
+            travel.setStartDate(request.getStartDate());
         }
-
-        travelMemberRepository.delete(member);
+        if (request.getEndDate() != null) {
+            travel.setEndDate(request.getEndDate());
+        }
     }
 
-    private Travel findTravelOrThrow(Long travelId) {
+    public Travel saveTravel(Travel travel) {
+        return travelRepository.save(travel);
+    }
+
+    public Travel findTravel(Long travelId) {
         return travelRepository.findById(travelId)
-                .orElseThrow(() -> new TravelNotFoundException("Поездка не найдена"));
+                .orElseThrow(() -> new TravelNotFoundException("Поездка с id = " + travelId + " не найдена"));
+    }
+
+    public void addExpense(Travel travel, Expense expense) {
+        checkTravelAndExpenseIsNull(travel, expense);
+
+        if (travel.getExpenses().contains(expense)) {
+            throw new DuplicateExpenseException("Трата с id = " + expense.getId() +
+                    "уже существует в поездке '" + travel.getName() + "'");
+        }
+
+        travel.getExpenses().add(expense);
+        expense.setTravel(travel);
+    }
+
+    public void removeExpense(Travel travel, Expense expense) {
+
+        checkTravelAndExpenseIsNull(travel, expense);
+
+        travel.getExpenses().remove(expense);
+        expense.setTravel(null);
+    }
+
+    public void addTransfer(Travel travel, Transfer transfer) {
+        checkTravelAndTransferIsNull(travel, transfer);
+
+        travel.getTransfers().add(transfer);
+        transfer.setTravel(travel);
+    }
+
+    public void removeTransfer(Travel travel, Transfer transfer) {
+        checkTravelAndTransferIsNull(travel, transfer);
+
+        travel.getTransfers().remove(transfer);
+        transfer.setTravel(null);
+    }
+
+    public void addTravelMember(Travel travel, TravelMember travelMember) {
+        checkTravelAndMemberIsNull(travel, travelMember);
+
+        travel.getTravelMembers().add(travelMember);
+        travelMember.setTravel(travel);
+    }
+
+    private void checkTravelAndMemberIsNull(Travel travel, TravelMember travelMember) {
+        if (travelMember == null) {
+            throw new IllegalArgumentException("Travel member is null");
+        }
+        if (travel == null) {
+            throw new IllegalArgumentException("Travel is null");
+        }
+    }
+
+    private void checkTravelAndTransferIsNull(Travel travel, Transfer transfer) {
+        if (transfer == null) {
+            throw new IllegalArgumentException("Transfer is null");
+        }
+        if (travel == null) {
+            throw new IllegalArgumentException("Travel is null");
+        }
     }
 
     private void validateDateRange(OffsetDateTime start, OffsetDateTime end) {
@@ -168,16 +179,18 @@ public class TravelService {
         }
     }
 
-    private void inviteSingleMember(Travel travel, String phone) {
-        User invitedUser = userRepository.findByPhone(phone)
-                .orElseThrow(() -> new UserNotFoundException("Пользователь %s не найден".formatted(phone)));
+    private void checkTravelAndExpenseIsNull(Travel travel, Expense expense) {
 
-        if (travelMemberRepository.existsByTravelIdAndUserId(travel.getId(), invitedUser.getId())) {
-            throw new ConflictStateException("Пользователь %s уже приглашён или является участником поездки"
-                    .formatted(phone));
+        if (expense == null) {
+            throw new IllegalArgumentException("Expense is null");
         }
+        if (travel == null) {
+            throw new IllegalArgumentException("Travel is null");
+        }
+    }
 
-        TravelMember newMember = travelFactory.invitedMember(travel, invitedUser);
-        travelMemberRepository.save(newMember);
+    public void checkTravel(Long travelId) {
+        travelRepository.findById(travelId)
+                .orElseThrow(() -> new TravelNotFoundException("Поездка с id = " + travelId + " не найдена"));
     }
 }
