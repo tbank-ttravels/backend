@@ -36,7 +36,7 @@
         <sqlFile
                 path="changes/V3__member_role.sql"
                 relativeToChangelogFile="true"
-                splitStatements="true"
+                splitStatements="false"
                 endDelimiter=";"/>
     </changeSet>
 
