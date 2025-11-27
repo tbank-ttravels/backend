@@ -60,7 +60,7 @@ public class History {
     public void setTravel(Travel travel) {
 
         if (travel == null)
-            throw new IllegalArgumentException("History creation failed: travel must not be null");
+            throw new IllegalArgumentException("Не удалось создать историю: поездка не может быть null");
 
         this.travel = travel;
     }
@@ -68,7 +68,7 @@ public class History {
     public void setAuthor(User author) {
 
         if (author == null)
-            throw new IllegalArgumentException("History creation failed: author must not be null");
+            throw new IllegalArgumentException("Не удалось создать историю: автор не может быть null");
 
         this.author = author;
     }
@@ -76,7 +76,7 @@ public class History {
     public void setType(HistoryType type) {
 
         if (type == null)
-            throw new IllegalArgumentException("History creation failed: type must not be null");
+            throw new IllegalArgumentException("Не удалось создать историю: тип не может быть null");
 
         this.type = type;
     }
