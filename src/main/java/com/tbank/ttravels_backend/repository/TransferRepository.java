@@ -10,4 +10,8 @@ public interface TransferRepository extends JpaRepository<Transfer, Long> {
     List<Transfer> findAllByTravel_Id(Long travelId);
 
     Optional<Transfer> findByIdAndTravel_Id(Long id, Long travelId);
+
+    List<Transfer> findAllByTravel_IdAndRecipient_Id(Long travelId, Long recipientId);
+
+    List<Transfer> findAllByTravel_IdAndSender_Id(Long travelId, Long senderId);
 }

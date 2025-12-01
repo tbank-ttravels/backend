@@ -83,4 +83,13 @@ public class TransferService {
                 transfer.getDate()
         );
     }
+
+    public List<Transfer> findAllByTravelIdAndRecipientId(Long travelId, Long recipientId) {
+
+        return transferRepository.findAllByTravel_IdAndRecipient_Id(travelId, recipientId);
+    }
+
+    public List<Transfer> findAllByTravelIdAndSenderId(Long travelId, Long senderId) {
+        return transferRepository.findAllByTravel_IdAndSender_Id(travelId, senderId);
+    }
 }
