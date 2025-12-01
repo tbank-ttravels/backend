@@ -1,16 +1,18 @@
 package com.tbank.ttravels_backend.dto.debt;
 
-import lombok.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 
-
+@Schema(description = "Информация о пользователе")
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Getter
-@Setter
-public class UserDTO {
+public record UserDTO(
+        @Schema(description = "ID пользователя", example = "8")
+        Long id,
 
-    private Long id;
-    private String name;
-    private String surname;
+        @Schema(description = "Имя пользователя", example = "Иван")
+        String name,
+
+        @Schema(description = "Фамилия пользователя", example = "Иванов")
+        String surname
+) {
 }

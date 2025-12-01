@@ -1,8 +1,8 @@
 package com.tbank.ttravels_backend.service;
 
 
-import com.tbank.ttravels_backend.dto.debt.DebtInfo;
-import com.tbank.ttravels_backend.dto.debt.TravelDebtsResponse;
+import com.tbank.ttravels_backend.dto.debt.DebtInfoDTO;
+import com.tbank.ttravels_backend.dto.debt.TravelDebtsResponseDTO;
 import com.tbank.ttravels_backend.entity.*;
 import com.tbank.ttravels_backend.mapper.UserDtoMapper;
 import jakarta.transaction.Transactional;
@@ -27,7 +27,7 @@ public class DebtCalculationService {
 
 
     @Transactional
-    public TravelDebtsResponse calculateDebtsForUser(Long userId, Long travelId) {
+    public TravelDebtsResponseDTO calculateDebtsForUser(Long userId, Long travelId) {
 
         var travelMembers = travelMemberService.findAllMembersInTravel(travelId).stream()
                 .map(TravelMember::getUser).toList();
@@ -49,11 +49,11 @@ public class DebtCalculationService {
     }
 
 
-    private TravelDebtsResponse createResponse(Map<User, BigDecimal> balances) {
+    private TravelDebtsResponseDTO createResponse(Map<User, BigDecimal> balances) {
 
 
-        List<DebtInfo> debts = new ArrayList<>();        // кому пользователь должен
-        List<DebtInfo> creditors = new ArrayList<>();    // кто должен пользователю
+        List<DebtInfoDTO> debts = new ArrayList<>();        // кому пользователь должен
+        List<DebtInfoDTO> creditors = new ArrayList<>();    // кто должен пользователю
 
         for (Map.Entry<User, BigDecimal> balance : balances.entrySet()) {
 
@@ -62,20 +62,20 @@ public class DebtCalculationService {
 
             if (amount.compareTo(BigDecimal.ZERO) > 0) {
 
-                creditors.add(DebtInfo.builder()
+                creditors.add(DebtInfoDTO.builder()
                         .user(userDto)
                         .totalAmount(amount)
                         .build());
             }
             if (amount.compareTo(BigDecimal.ZERO) < 0) {
-                debts.add(DebtInfo.builder()
+                debts.add(DebtInfoDTO.builder()
                         .user(userDto)
                         .totalAmount(amount.abs())
                         .build());
             }
         }
 
-        return TravelDebtsResponse.builder()
+        return TravelDebtsResponseDTO.builder()
                 .creditors(creditors)
                 .debts(debts)
                 .build();
