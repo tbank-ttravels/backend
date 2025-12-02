@@ -25,8 +25,6 @@ import java.util.stream.Collectors;
 
 
 // TODO батч операции
-// TODO вернуть список всех трат
-// TODO долги
 @Service
 @RequiredArgsConstructor
 public class ExpenseService {
@@ -257,9 +255,8 @@ public class ExpenseService {
      * @throws EmptyUpdateRequestException      если DTO пустое
      * @throws UserNotFoundExpenseException     если передан participantId, которого нет в тратах
      * @throws InvalidParticipantShareException если доли некорректны
-     * @throws TravelNotFoundException          если поездка не найдена
+     *                                          //TODO    * @throws TravelNotFoundException          если поездка не найдена
      * @throws ExpenseNotFoundInTravelException если трата не найдена
-     * @throws UserNotFoundInTravelException    если новый плательщик не участник поездки
      */
     @Transactional
     public ExpenseResponseDTO updateExpense(Long travelId, Long expenseId,
@@ -380,7 +377,7 @@ public class ExpenseService {
         }
 
         if (categoryId != null) {
-            expense.setCategory(this.categoryService.findCategory(categoryId));
+            expense.setCategory(categoryService.findCategory(categoryId));
         }
 
         if (date != null) {
@@ -404,7 +401,6 @@ public class ExpenseService {
                                        Map<Long, BigDecimal> participantShares) {
 
         Set<MemberExpense> membersExpense = expense.getMemberExpenses();
-
 
         membersExpense.forEach(me -> {
             Long participantId = me.getParticipant().getId();
@@ -542,6 +538,7 @@ public class ExpenseService {
      * @throws UserNotFoundInTravelException    если один или несколько пользователей не являются участниками поездки
      * @throws DuplicateParticipantException    если один или несколько участников уже есть в этой трате
      * @throws InvalidParticipantShareException если доля одного из участников некорректна
+     * @throws ExpenseNotFoundInTravelException если трата не найдена
      */
     @Transactional
     public ExpenseResponseDTO addParticipantsToExpense(Long travelId, Long expenseId, Map<Long, BigDecimal> participantShares) {
@@ -552,14 +549,14 @@ public class ExpenseService {
 
         this.validateShares(participantShares);
 
-        Expense expense = this.findExpenseInTravel(expenseId, travelId);
+        Expense expense = findExpenseInTravel(expenseId, travelId);
 
         // Все ли являются участниками поездки?
         travelMemberService.validateAllUsersInTravel(travelId, participantShares.keySet());
 
         ensureParticipantsAreNew(expense, participantShares.keySet());
 
-        List<MemberExpense> newParticipants = this.userService.getUsers(participantShares.keySet()).stream()
+        List<MemberExpense> newParticipants = userService.getUsers(participantShares.keySet()).stream()
                 .map(user -> MemberExpenseFactory.create(user, participantShares.get(user.getId()).negate()))
                 .toList();
 
@@ -638,4 +635,15 @@ public class ExpenseService {
 
         return expenseRepository.findAllByTravelIdOrderByDateDesc(travelId);
     }
+
+    public List<Expense> findAllByTravelIdAndPayerIdOrderByDateDesc(Long travelId, Long payerId) {
+
+        return expenseRepository.findAllByTravelIdAndPayerIdOrderByDateDesc(travelId, payerId);
+    }
+
+    public List<Expense> findExpensesWhereUserIsDebtor(Long userId, Long travelId) {
+
+        return expenseRepository.findExpensesWhereUserIsDebtor(userId, travelId);
+    }
+
 }
