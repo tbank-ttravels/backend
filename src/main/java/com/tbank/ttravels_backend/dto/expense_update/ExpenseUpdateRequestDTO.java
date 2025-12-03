@@ -1,17 +1,19 @@
 package com.tbank.ttravels_backend.dto.expense_update;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Map;
 
 @Schema(description = "DTO для обновления траты")
+@Builder
 public record ExpenseUpdateRequestDTO(
         @Schema(description = "Название траты", example = "Обед с друзьями")
         String name,
 
-        @Schema(description = "Описание траты", example = "Поход в кафе после работы")
+        @Schema(description = "Описание траты", example = "Поход в кафе")
         String description,
 
         @Schema(description = "Дата траты", example = "2025-11-22T15:30:00+03:00")

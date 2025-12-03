@@ -39,15 +39,18 @@ public class Travel {
     @OneToMany(cascade = CascadeType.ALL,
             mappedBy = "travel",
             orphanRemoval = true)
+    @Builder.Default
     private Set<TravelMember> travelMembers = new HashSet<>();
 
     @OneToMany(mappedBy = "travel",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
+    @Builder.Default
     private List<Expense> expenses = new ArrayList<>();
 
     @OneToMany(mappedBy = "travel",
             cascade = CascadeType.ALL,
             orphanRemoval = true)
+    @Builder.Default
     private List<Transfer> transfers = new ArrayList<>();
 }
