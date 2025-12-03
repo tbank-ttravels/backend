@@ -641,7 +641,7 @@ public class ExpenseService {
         return expenseRepository.findAllByTravelIdAndPayerIdOrderByDateDesc(travelId, payerId);
     }
 
-    public List<Expense> findExpensesWhereUserIsDebtor(Long userId, Long travelId) {
+    public List<Expense> findExpensesWhereUserIsDebtor(Long travelId, Long userId) {
 
         return expenseRepository.findExpensesWhereUserIsDebtor(userId, travelId);
     }

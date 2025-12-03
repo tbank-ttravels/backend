@@ -26,6 +26,25 @@ public class DebtCalculationService {
     private final UserDtoMapper userDtoMapper;
 
 
+    /**
+     * Рассчитывает взаиморасчёты пользователя со всеми участниками поездки.
+     * <p>
+     * Особенности:
+     * - Инициализируются нулевые балансы для всех участников поездки.
+     * - Обрабатываются расходы, где пользователь является плательщиком:
+     *   участникам добавляются их доли.
+     * - Обрабатываются входящие и исходящие денежные переводы.
+     * - Обрабатываются расходы, где пользователь выступает должником.
+     * - Итоговые значения округляются до 2 знаков.
+     * <p>
+     * В результате формируются:
+     * - creditors — пользователю должны;
+     * - debts — пользователь должен другим.
+     *
+     * @param userId   идентификатор пользователя.
+     * @param travelId идентификатор поездки.
+     * @return DTO с распределением долгов.
+     */
     @Transactional
     public TravelDebtsResponseDTO calculateDebtsForUser(Long userId, Long travelId) {
 
@@ -49,6 +68,17 @@ public class DebtCalculationService {
     }
 
 
+    /**
+     * Формирует DTO результата расчётов на основании словаря балансов.
+     * <p>
+     * Особенности:
+     * - Положительный баланс означает, что пользователь является кредитором.
+     * - Отрицательный баланс означает, что пользователь является должником.
+     * - Нулевой баланс игнорируется.
+     *
+     * @param balances итоговые балансы всех участников.
+     * @return DTO с информацией о кредиторах и должниках.
+     */
     private TravelDebtsResponseDTO createResponse(Map<User, BigDecimal> balances) {
 
 
@@ -82,6 +112,19 @@ public class DebtCalculationService {
     }
 
 
+    /**
+     * Обрабатывает расходы, где текущий пользователь является плательщиком.
+     * <p>
+     * Особенности:
+     * - Плательщик не получает изменений в балансе.
+     * - Для каждого другого участника добавляется абсолютная величина
+     *   его доли в расходе.
+     * - Доли участников могут быть отрицательными, поэтому используется abs().
+     *
+     * @param balances текущие балансы участников.
+     * @param travelId идентификатор поездки.
+     * @param userId   идентификатор пользователя (плательщика).
+     */
     private void calculateDebtsFromExpenses(Map<User, BigDecimal> balances, Long travelId, Long userId) {
 
         var expenses =
@@ -100,6 +143,18 @@ public class DebtCalculationService {
     }
 
 
+    /**
+     * Применяет входящие и исходящие переводы относительно пользователя.
+     * <p>
+     * Особенности:
+     * - Входящий перевод уменьшает долг отправителя.
+     * - Исходящий перевод увеличивает долг получателя.
+     * - Сумма перевода передаётся как есть, без модификаций.
+     *
+     * @param balances текущие балансы участников.
+     * @param travelId идентификатор поездки.
+     * @param userId   идентификатор пользователя.
+     */
     private void applyTransfers(Map<User, BigDecimal> balances, Long travelId, Long userId) {
 
         // Все переводы, которые совершены пользователю
@@ -133,10 +188,22 @@ public class DebtCalculationService {
     }
 
 
+    /**
+     * Обрабатывает расходы, в которых пользователь выступает должником.
+     * <p>
+     * Особенности:
+     * - Ищется доля пользователя (отрицательная).
+     * - Плательщик получает эту сумму в положительном выражении.
+     * - Если доля отсутствует, используется 0.
+     *
+     * @param balances текущие балансы участников.
+     * @param travelId идентификатор поездки.
+     * @param userId   идентификатор пользователя (должника).
+     */
     private void applyExpensesWhereUserIsDebtor(Map<User, BigDecimal> balances, Long travelId, Long userId) {
 
         var debtorExpenses =
-                expenseService.findExpensesWhereUserIsDebtor(userId, travelId);
+                expenseService.findExpensesWhereUserIsDebtor(travelId, userId);
 
         for (Expense expense : debtorExpenses) {
 
