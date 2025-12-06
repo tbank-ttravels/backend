@@ -70,3 +70,4 @@ $RECYCLE.BIN/
 *~
 *.orig
 application-local.properties
+.env
