@@ -100,7 +100,16 @@ public class TravelMemberService {
     private void inviteSingleMember(Travel travel, String phone) {
         User invitedUser = accountService.findUserByPhone(phone);
 
-        if (travelMemberRepository.existsByTravelIdAndUserId(travel.getId(), invitedUser.getId())) {
+        TravelMember existingMember = travelMemberRepository.findByUserIdAndTravelId(invitedUser.getId(), travel.getId())
+                .orElse(null);
+
+        if (existingMember != null) {
+            if (existingMember.getStatus() == MemberStatus.REJECTED || existingMember.getStatus() == MemberStatus.LEAVE) {
+                existingMember.setStatus(MemberStatus.INVITED);
+                saveTravelMember(existingMember);
+                return;
+            }
+
             throw new ConflictStateException("Пользователь %s уже приглашён или является участником поездки"
                     .formatted(phone));
         }
