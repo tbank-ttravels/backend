@@ -1,7 +1,7 @@
 package com.tbank.ttravels_backend.controller;
 
-import com.tbank.ttravels_backend.exception.*;
 import com.tbank.ttravels_backend.dto.ErrorResponse;
+import com.tbank.ttravels_backend.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -29,7 +29,8 @@ public class RestExceptionHandler {
             EmptyParticipantsListException.class,
             DuplicateParticipantException.class,
             UserNotFoundExpenseException.class,
-            InviteNotFoundException.class
+            InviteNotFoundException.class,
+            UserNotFoundByPhoneException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
 
