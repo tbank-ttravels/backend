@@ -49,8 +49,8 @@ public class TravelMemberService {
 
     @Transactional
     public MyTravelsResponse getMyTravels(Long userId) {
-        List<Travel> travels = findAllTravelForUser(userId);
-        return travelMapper.toMyTravelsResponse(travels);
+        List<TravelMember> memberships = findAllTravelForUser(userId);
+        return travelMapper.toMyTravelsResponse(memberships);
     }
 
     @Transactional
@@ -124,11 +124,8 @@ public class TravelMemberService {
     }
 
     @Transactional
-    public List<Travel> findAllTravelForUser(Long userId) {
-        return travelMemberRepository.findAllByUserIdAndStatus(userId, MemberStatus.ACCEPTED)
-                .stream()
-                .map(TravelMember::getTravel)
-                .toList();
+    public List<TravelMember> findAllTravelForUser(Long userId) {
+        return travelMemberRepository.findAllByUserIdAndStatus(userId, MemberStatus.ACCEPTED);
     }
 
     public User findUserInTravel(Long userId, Long travelId) {
