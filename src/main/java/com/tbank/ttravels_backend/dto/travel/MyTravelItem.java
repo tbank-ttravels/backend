@@ -1,7 +1,6 @@
 package com.tbank.ttravels_backend.dto.travel;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.tbank.ttravels_backend.enums.MemberRole;
 import com.tbank.ttravels_backend.enums.TravelStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -28,6 +27,4 @@ public class MyTravelItem {
     private OffsetDateTime endDate;
     @Schema(description = "Статус поездки", example = "ACTIVE")
     private TravelStatus travelStatus;
-    @Schema(description = "Роль пользователя в поездке", example = "OWNER")
-    private MemberRole role;
 }

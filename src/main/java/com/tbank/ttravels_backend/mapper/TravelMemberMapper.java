@@ -39,7 +39,8 @@ public class TravelMemberMapper {
                 user.getId(),
                 user.getName(),
                 user.getPhone(),
-                member.getStatus()
+                member.getStatus(),
+                member.getRole()
         );
     }
 
