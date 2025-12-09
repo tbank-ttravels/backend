@@ -1,4 +1,4 @@
-package com.tbank.ttravels_backend.service;
+package com.tbank.ttravels_backend.service.expense;
 
 import com.tbank.ttravels_backend.dto.exspense.ExpenseResponseDTO;
 import com.tbank.ttravels_backend.dto.exspense.MemberExpenseResponseDTO;
@@ -9,6 +9,7 @@ import com.tbank.ttravels_backend.entity.User;
 import com.tbank.ttravels_backend.exception.*;
 import com.tbank.ttravels_backend.mapper.ExpenseDtoMapper;
 import com.tbank.ttravels_backend.repository.ExpenseRepository;
+import com.tbank.ttravels_backend.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
