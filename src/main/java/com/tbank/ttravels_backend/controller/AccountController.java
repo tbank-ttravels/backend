@@ -2,6 +2,7 @@ package com.tbank.ttravels_backend.controller;
 
 import com.tbank.ttravels_backend.dto.ErrorResponse;
 import com.tbank.ttravels_backend.dto.auth.*;
+import com.tbank.ttravels_backend.dto.debt.UserDTO;
 import com.tbank.ttravels_backend.dto.travel.member.InvitesResponse;
 import com.tbank.ttravels_backend.security.UserPrincipal;
 import com.tbank.ttravels_backend.service.AccountService;
@@ -122,6 +123,24 @@ public class AccountController {
         return accountService.refresh(request);
     }
 
+    @Operation(summary = "Изменение информации о текущем пользователе",
+            description = "Позволяет аутентифицированному пользователю изменить имя и/или фамилию своей учетной записи.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200",
+                    description = "Информация о пользователе успешно изменена",
+                    content = @Content(schema = @Schema(implementation = UserDTO.class))),
+            @ApiResponse(responseCode = "401",
+                    description = "Пользователь не аутентифицирован",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+    })
+    @PostMapping()
+    public UserDTO editUser(@AuthenticationPrincipal UserPrincipal principal,
+                            @Valid @RequestBody EditUserRequest request) {
+        return accountService.editUser(principal.getId(), request);
+    }
+
     @Operation(summary = "Получение информации о текущем пользователе",
             description = "Позволяет аутентифицированному пользователю получить информацию о своей учетной записи.",
             security = @SecurityRequirement(name = "bearerAuth")
@@ -129,13 +148,13 @@ public class AccountController {
     @ApiResponses({
             @ApiResponse(responseCode = "200",
                     description = "Информация о пользователе успешно получена",
-                    content = @Content(schema = @Schema(implementation = AccountResponse.class))),
+                    content = @Content(schema = @Schema(implementation = UserDTO.class))),
             @ApiResponse(responseCode = "401",
                     description = "Пользователь не аутентифицирован",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
-    @GetMapping("/me")
-    public AccountResponse getCurrentUser(@AuthenticationPrincipal UserPrincipal principal) {
+    @GetMapping()
+    public UserDTO getCurrentUser(@AuthenticationPrincipal UserPrincipal principal) {
         return accountService.getCurrentUser(principal.getId());
     }
 }

@@ -1,6 +1,7 @@
 package com.tbank.ttravels_backend.service;
 
 import com.tbank.ttravels_backend.dto.auth.*;
+import com.tbank.ttravels_backend.dto.debt.UserDTO;
 import com.tbank.ttravels_backend.entity.PasswordCredential;
 import com.tbank.ttravels_backend.entity.RefreshToken;
 import com.tbank.ttravels_backend.entity.User;
@@ -8,6 +9,7 @@ import com.tbank.ttravels_backend.exception.InvalidCredentialsException;
 import com.tbank.ttravels_backend.exception.RefreshTokenNotFoundException;
 import com.tbank.ttravels_backend.exception.UserNotFoundByPhoneException;
 import com.tbank.ttravels_backend.exception.UserNotFoundException;
+import com.tbank.ttravels_backend.mapper.UserDtoMapper;
 import com.tbank.ttravels_backend.repository.PasswordCredentialRepository;
 import com.tbank.ttravels_backend.repository.RefreshTokenRepository;
 import com.tbank.ttravels_backend.repository.UserRepository;
@@ -26,6 +28,7 @@ import java.util.Set;
 public class AccountService {
 
     private final UserRepository userRepository;
+    private final UserDtoMapper userDtoMapper;
     private final PasswordCredentialRepository credentialRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
@@ -51,6 +54,19 @@ public class AccountService {
                 });
     }
 
+    public UserDTO editUser(Long userId, EditUserRequest request) {
+        User user = findUser(userId);
+
+        if (request.getNewName() != null) {
+            user.setName(request.getNewName());
+        }
+        if (request.getNewSurname() != null) {
+            user.setSurname(request.getNewSurname());
+        }
+
+        return userDtoMapper.createUserDTO(user);
+    }
+
     @Transactional
     public void logout(Long userId, LogoutRequest request) {
         String tokenHash = tokenHashService.hash(request.getRefreshToken());
@@ -74,10 +90,10 @@ public class AccountService {
         return tokenIssuer.rotate(storedToken);
     }
 
-    public AccountResponse getCurrentUser(Long userId) {
+    public UserDTO getCurrentUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("Пользователь с id = " + userId + " не найден"));
-        return new AccountResponse(user.getPhone(), user.getName(), user.getSurname());
+        return userDtoMapper.createUserDTO(user);
     }
 
     public User findUser(Long userId) {
