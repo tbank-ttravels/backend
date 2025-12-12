@@ -1,0 +1,16 @@
+server.port=port
+
+spring.datasource.url=jdbc:postgresql://ip:port/db_name
+spring.datasource.username=psql_username
+spring.datasource.password=psql_passwd
+
+# Debug SQL request
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=DEBUG
+app.security.jwt.issuer=ttravels-backend
+app.security.jwt.access-secret=${JWT_ACCESS_SECRET}
+app.security.jwt.access-ttl=15m
+app.security.jwt.refresh-secret=${JWT_REFRESH_SECRET}
+app.security.jwt.refresh-ttl=30d

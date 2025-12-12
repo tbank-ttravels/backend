@@ -1,0 +1,77 @@
+# ===================================================================
+# Файлы, сгенерированные Maven и Java
+# ===================================================================
+
+# Папка с результатами сборки Maven
+/target/
+
+# Логи JVM при падении
+hs_err_pid*
+
+# Лог-файлы
+*.log
+
+# Пакетные файлы (jar, war и т.д.)
+*.jar
+*.war
+*.ear
+
+# Исключение для Maven Wrapper, чтобы он остался в репозитории
+# Это правило должно идти ПОСЛЕ *.jar
+!/.mvn/wrapper/maven-wrapper.jar
+
+# Файлы, генерируемые плагином релиза Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# ===================================================================
+# Файлы IDE
+# ===================================================================
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.iws
+*.ipr
+
+### Eclipse / Spring Tool Suite (STS) ###
+.metadata/
+.classpath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+bin/
+
+### VS Code ###
+.vscode/
+
+# ===================================================================
+# Системные и временные файлы
+# ===================================================================
+
+### Операционные системы (Windows/macOS) ###
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+.DS_Store
+
+### Временные файлы и бэкапы редакторов ###
+*.tmp
+*.bak
+*.swp
+*~
+*.orig
+application-local.properties
+application.yml
+.env
+
+ttravels-75eda-firebase-adminsdk-fbsvc-555d0f421e.json
+firebase-app.json

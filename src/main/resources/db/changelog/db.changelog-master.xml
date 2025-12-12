@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+        <changeSet id="V1-enums" author="you">
+            <preConditions onFail="MARK_RAN">
+                <dbms type="postgresql"/>
+            </preConditions>
+            <sqlFile
+                    path="changes/V1__enums.sql"
+                    relativeToChangelogFile="true"
+                    splitStatements="false"
+                    endDelimiter="$$"/>
+        </changeSet>
+
+        <changeSet id="V1-init-schema" author="you">
+            <sqlFile
+                    path="changes/V1__init.sql"
+                    relativeToChangelogFile="true"
+                    splitStatements="true"
+                    endDelimiter=";"/>
+        </changeSet>
+
+    <changeSet id="V2-refresh-tokens" author="you">
+        <sqlFile
+                path="changes/V2__refresh_tokens.sql"
+                relativeToChangelogFile="true"
+                splitStatements="true"
+                endDelimiter=";"/>
+    </changeSet>
+
+    <changeSet id="V3__member_role" author="you">
+        <sqlFile
+                path="changes/V3__member_role.sql"
+                relativeToChangelogFile="true"
+                splitStatements="false"
+                endDelimiter=";"/>
+    </changeSet>
+
+</databaseChangeLog>
