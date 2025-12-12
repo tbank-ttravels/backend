@@ -118,7 +118,6 @@ public class ExpenseServiceCreateExpenseTest {
         assertAll(
                 () -> assertThat(actual).isNotNull(),
 
-                // Проверка полей ответа
                 () -> assertThat(actual.name()).isEqualTo(requestDTO.getName()),
                 () -> assertThat(actual.description()).isEqualTo(requestDTO.getDescription()),
                 () -> assertThat(actual.payerId()).isEqualTo(requestDTO.getPayerId()),
@@ -126,7 +125,6 @@ public class ExpenseServiceCreateExpenseTest {
                 () -> assertThat(actual.categoryId()).isEqualTo(requestDTO.getCategoryId()),
                 () -> assertThat(actual.categoryName()).isEqualTo(category.getName()),
 
-                // Проверка участников
                 () -> {
                     assertThat(actual.participants())
                             .hasSize(2)
@@ -134,7 +132,6 @@ public class ExpenseServiceCreateExpenseTest {
                             .containsExactlyInAnyOrder(payer.getId(), participant.getId());
                 },
 
-                // Проверка долей участников
                 () -> {
                     for (MemberExpenseResponseDTO p : actual.participants()) {
                         if (p.userId().equals(payer.getId())) {
@@ -147,7 +144,6 @@ public class ExpenseServiceCreateExpenseTest {
                     }
                 },
 
-                // --- проверка реальных MemberExpense, что в БД положительные/отрицательные доли ---
                 () -> {
                     ArgumentCaptor<MemberExpense> captor = ArgumentCaptor.forClass(MemberExpense.class);
                     verify(memberExpenseService, times(2))
@@ -157,11 +153,11 @@ public class ExpenseServiceCreateExpenseTest {
                     for (MemberExpense me : saved) {
                         if (me.getParticipant().getId().equals(payer.getId())) {
                             assertThat(me.getShare())
-                                    .as("Плательщик должен иметь положительную долю")
+                                    .as("The payer must have a positive share")
                                     .isEqualByComparingTo(payerShare);
                         } else if (me.getParticipant().getId().equals(participant.getId())) {
                             assertThat(me.getShare())
-                                    .as("Участник должен иметь отрицательную долю")
+                                    .as("The participant must have a negative share")
                                     .isEqualByComparingTo(participantShare.negate());
                         } else {
                             fail("Unexpected participant id: " + me.getParticipant().getId());
@@ -210,26 +206,39 @@ public class ExpenseServiceCreateExpenseTest {
         );
     }
 
-// TODO в сервсие получать список всех сразу, там 2 раза получаю платящего
 
-//    @Test
-//    void throwUserNotFoundInTravelException() {
-//
-//        Long travelId = 1L;
-//
-//        ExpenseRequestDTO requestDTO = ExpenseTestFactory.createExpenseRequestDTO(
-//                "Ужин в ресторане",
-//                1L,
-//                Map.of(1L, BigDecimal.valueOf(100)),
-//                1L);
-//
-//        doThrow(new UserNotFoundInTravelException("User not found"))
-//                .when(travelMemberService)
-//                .validateAllUsersInTravel(eq(travelId), anySet());
-//
-//        assertThrows(UserNotFoundInTravelException.class,
-//                () -> expenseService.createExpense(requestDTO, travelId));
-//    }
+    @Test
+    void throwUserNotFoundInTravelException() {
+
+        // === Given ===
+        Long travelId = 1L;
+
+        ExpenseRequestDTO requestDTO = TestDataFactory.expenseRequestDTO(
+                1L,
+                Map.of(1L, BigDecimal.valueOf(100)),
+                1L);
+
+
+        // === Mocking ===
+        doThrow(new UserNotFoundInTravelException("User not found"))
+                .when(travelMemberService)
+                .validateAllUsersInTravel(eq(travelId), anySet());
+
+
+        // === When & Then ===
+        assertThrows(UserNotFoundInTravelException.class,
+                () -> expenseService.createExpense(requestDTO, travelId));
+
+
+        // === VERIFY ===
+        verify(travelMemberService).validateAllUsersInTravel(eq(travelId), anySet());
+        verifyNoMoreInteractions(travelMemberService);
+        verifyNoInteractions(
+                categoryService,
+                travelService,
+                memberExpenseService
+        );
+    }
 
 
     @DisplayName("Ошибка: плательщик отсутствует среди участников траты (создание траты)")
@@ -263,7 +272,6 @@ public class ExpenseServiceCreateExpenseTest {
                 travelService,
                 memberExpenseService
         );
-
     }
 
 
@@ -334,7 +342,7 @@ public class ExpenseServiceCreateExpenseTest {
     void throwTravelNotFoundException() {
 
         // === Given ===
-        Long travelId = 1L,
+        long travelId = 1L,
                 payerId = 1L;
 
 
