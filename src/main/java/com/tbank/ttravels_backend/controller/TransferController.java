@@ -21,7 +21,7 @@ public class TransferController {
     private final TravelSecurityService travelSecurity;
 
     @PostMapping
-    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     public TransferResponse create(
             @PathVariable Long travelId,
             @AuthenticationPrincipal UserPrincipal principal,
@@ -31,7 +31,7 @@ public class TransferController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     public TransferResponse edit(
             @PathVariable Long travelId,
             @AuthenticationPrincipal UserPrincipal principal,

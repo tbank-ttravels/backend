@@ -19,7 +19,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -55,7 +54,7 @@ public class ExpenseController {
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     public ExpenseResponseDTO createExpense(
             @Parameter(description = "Данные для создания траты")
             @RequestBody @Valid ExpenseRequestDTO expenseRequestDTO,
@@ -79,7 +78,7 @@ public class ExpenseController {
     })
     @DeleteMapping("/{expenseId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     public void deleteExpense(
             @Parameter(description = "ID поездки", example = "8")
             @PathVariable Long travelId,
@@ -107,7 +106,7 @@ public class ExpenseController {
     })
     @PatchMapping("/{expenseId}")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     public ExpenseResponseDTO updateExpense(
             @Parameter(description = "ID поездки", example = "8")
             @PathVariable Long travelId,
@@ -159,7 +158,7 @@ public class ExpenseController {
     })
     @DeleteMapping("/{expenseId}/participants")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     public ExpenseResponseDTO removeParticipantsFromExpense(
             @Parameter(description = "ID поездки", example = "8")
             @PathVariable Long travelId,
@@ -199,7 +198,7 @@ public class ExpenseController {
     })
     @PostMapping("/{expenseId}/participants")
     @ResponseStatus(HttpStatus.OK)
-    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     public ExpenseResponseDTO addParticipantsToExpense(
             @Parameter(description = "ID поездки", example = "8")
             @PathVariable Long travelId,

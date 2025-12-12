@@ -106,7 +106,7 @@ public class TravelController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PatchMapping("/{travelId}")
-    @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     @ResponseStatus(HttpStatus.OK)
     public TravelResponse editTravel(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
                                          @PathVariable Long travelId,
@@ -130,7 +130,7 @@ public class TravelController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/{travelId}/close")
-    @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     @ResponseStatus(HttpStatus.OK)
     public void closeTravel(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
                                 @PathVariable Long travelId,

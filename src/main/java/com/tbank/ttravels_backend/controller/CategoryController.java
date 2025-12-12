@@ -19,7 +19,7 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
-    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     public CategoryResponse create(
             @PathVariable Long travelId,
             @AuthenticationPrincipal UserPrincipal principal,
@@ -29,7 +29,7 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     public CategoryResponse edit(
             @PathVariable Long travelId,
             @PathVariable Long id,

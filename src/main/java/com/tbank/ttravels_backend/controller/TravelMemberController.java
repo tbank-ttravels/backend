@@ -43,7 +43,7 @@ public class TravelMemberController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/invite")
-    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isMember(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void inviteMember(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
                                  @PathVariable Long travelId,
@@ -87,7 +87,7 @@ public class TravelMemberController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/kick/{userId}")
-    @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id)")
+    @PreAuthorize("@travelSecurity.isOwner(#travelId, principal.id) && @travelSecurity.isTravelOpen(#travelId)")
     @ResponseStatus(HttpStatus.OK)
     public void kickMember(@Parameter(description = "Идентификатор поездки", required = true, example = "42")
                                @PathVariable Long travelId,
