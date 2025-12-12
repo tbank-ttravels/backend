@@ -43,7 +43,7 @@ public class TransferService {
                 .build();
 
         travelService.addTransfer(travel, transfer);
-        travelService.saveTravel(travel);
+        transferRepository.saveAndFlush(transfer);
 
         return toResponse(transfer);
     }
