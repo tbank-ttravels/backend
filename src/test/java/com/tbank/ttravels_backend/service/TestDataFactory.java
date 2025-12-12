@@ -1,7 +1,12 @@
 package com.tbank.ttravels_backend.service;
 
+import com.tbank.ttravels_backend.dto.auth.AuthRegisterRequest;
+import com.tbank.ttravels_backend.dto.category.CreateCategoryRequest;
+import com.tbank.ttravels_backend.dto.category.EditCategoryRequest;
 import com.tbank.ttravels_backend.dto.expense_update.ExpenseUpdateRequestDTO;
 import com.tbank.ttravels_backend.dto.exspense.ExpenseRequestDTO;
+import com.tbank.ttravels_backend.dto.transfer.CreateTransferRequest;
+import com.tbank.ttravels_backend.dto.transfer.EditTransferRequest;
 import com.tbank.ttravels_backend.entity.*;
 
 import java.math.BigDecimal;
@@ -15,7 +20,7 @@ public class TestDataFactory {
     private static final String TRAVEL_NAME = "travel name";
     private static final String EXPENSE_NAME = "expense name";
     private static final String CATEGORY_NAME = "category name";
-    private static final String USER_NAME_PREFIX = "User";
+    private static final String USER_NAME_PREFIX = "Name";
     private static final String USER_SURNAME_PREFIX = "Surname";
 
 
@@ -27,6 +32,12 @@ public class TestDataFactory {
                 .build();
     }
 
+    public static User user(long userId, String phone) {
+        return User.builder()
+                .id(userId)
+                .phone(phone)
+                .build();
+    }
 
     public static Travel travel(Long id) {
         return Travel.builder()
@@ -42,6 +53,14 @@ public class TestDataFactory {
                 .build();
     }
 
+    public static Category category(Long id, Travel travel) {
+        return Category.builder()
+                .id(id)
+                .travel(travel)
+                .name(CATEGORY_NAME)
+                .build();
+    }
+
     public static MemberExpense memberExpense(User user, double share) {
         return MemberExpense.builder()
                 .participant(user)
@@ -49,6 +68,28 @@ public class TestDataFactory {
                 .build();
     }
 
+    public static MemberExpense memberExpense(long userId, double share) {
+
+        User user = user(userId);
+
+        return MemberExpense.builder()
+                .id(userId)
+                .participant(user)
+                .share(BigDecimal.valueOf(share))
+                .build();
+    }
+
+    public static MemberExpense memberExpense(long userId, double share, Expense expense) {
+
+        User user = user(userId);
+
+        return MemberExpense.builder()
+                .id(userId)
+                .participant(user)
+                .share(BigDecimal.valueOf(share))
+                .expense(expense)
+                .build();
+    }
 
     public static Expense fullExpense(long expenseId) {
 
@@ -104,7 +145,6 @@ public class TestDataFactory {
                 .build();
     }
 
-
     public static Expense expense(long expenseId, User payer,
                                   Set<MemberExpense> memberExpenses, Category category) {
 
@@ -138,6 +178,25 @@ public class TestDataFactory {
                 .sender(sender)
                 .recipient(recipient)
                 .sum(BigDecimal.valueOf(amount))
+                .build();
+    }
+
+    public static Transfer transfer(long id, User sender, User recipient, double amount) {
+        return Transfer.builder()
+                .id(id)
+                .sender(sender)
+                .recipient(recipient)
+                .sum(BigDecimal.valueOf(amount))
+                .build();
+    }
+
+    public static Transfer transfer(long id, long senderId, long recipientId, long travelId, double amount) {
+        return Transfer.builder()
+                .id(id)
+                .sender(user(senderId))
+                .recipient(user(recipientId))
+                .sum(BigDecimal.valueOf(amount))
+                .travel(travel(travelId))
                 .build();
     }
 
@@ -184,6 +243,22 @@ public class TestDataFactory {
                 .date(OffsetDateTime.now())
                 .participantShares(participantShares)
                 .build();
+    }
+
+    public static CreateCategoryRequest createCategoryRequest(String name) {
+        return new CreateCategoryRequest(name);
+    }
+
+    public static EditCategoryRequest editCategoryRequest(String name) {
+        return new EditCategoryRequest(name);
+    }
+
+    public static CreateTransferRequest createTransferRequest(long senderId, long recipientId, BigDecimal sum) {
+        return new CreateTransferRequest(senderId, recipientId, sum);
+    }
+
+    public static EditTransferRequest editTransferRequest(BigDecimal sum) {
+        return new EditTransferRequest(sum);
     }
 
 
