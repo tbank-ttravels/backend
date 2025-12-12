@@ -603,6 +603,7 @@ public class ExpenseService {
      * @return DTO с суммой всех расходов, количеством и списком расходов
      * @throws TravelNotFoundException если поездка с указанным travelId не найдена
      */
+    @Transactional
     public TravelExpensesResponseDTO getAllExpensesInTravel(Long travelId) {
 
         travelService.checkTravel(travelId);
