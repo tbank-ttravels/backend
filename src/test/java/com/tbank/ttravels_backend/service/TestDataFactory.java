@@ -7,6 +7,8 @@ import com.tbank.ttravels_backend.dto.exspense.ExpenseRequestDTO;
 import com.tbank.ttravels_backend.dto.transfer.CreateTransferRequest;
 import com.tbank.ttravels_backend.dto.transfer.EditTransferRequest;
 import com.tbank.ttravels_backend.entity.*;
+import com.tbank.ttravels_backend.enums.MemberRole;
+import com.tbank.ttravels_backend.enums.MemberStatus;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -38,12 +40,45 @@ public class TestDataFactory {
                 .build();
     }
 
+
+
     public static Travel travel(long id) {
         return Travel.builder()
                 .id(id)
                 .name(TRAVEL_NAME)
                 .build();
     }
+
+
+
+    public static TravelMember travelMember(long id, long userId, long travelId) {
+        return TravelMember.builder().id(id).travel(travel(travelId)).user(user(userId)).build();
+    }
+
+    public static TravelMember travelMember(long id, long userId) {
+        return TravelMember.builder().id(id).user(user(userId)).build();
+    }
+
+    public static TravelMember travelMemberInvite(long id, long userId) {
+        return TravelMember.builder().id(id).user(user(userId)).status(MemberStatus.INVITED).build();
+    }
+
+    public static TravelMember travelMember(long id, long userId, MemberStatus status) {
+        return TravelMember.builder().id(id).user(user(userId)).status(status).build();
+    }
+
+    public static TravelMember travelMember(long travelMemberId, long userId, long travelId,
+                                            MemberRole role, MemberStatus status) {
+        return TravelMember.builder()
+                .id(travelMemberId)
+                .travel(travel(travelId))
+                .user(user(userId))
+                .role(role)
+                .status(status)
+                .build();
+    }
+
+
 
     public static Category category(long id) {
         return Category.builder()
@@ -59,6 +94,8 @@ public class TestDataFactory {
                 .name(CATEGORY_NAME)
                 .build();
     }
+
+
 
     public static MemberExpense memberExpense(User user, double share) {
         return MemberExpense.builder()
@@ -89,6 +126,7 @@ public class TestDataFactory {
                 .expense(expense)
                 .build();
     }
+
 
 
     public static Expense fullExpense(long expenseId) {
@@ -136,7 +174,6 @@ public class TestDataFactory {
     public static Expense expense(long expenseId) {
         return Expense.builder().id(expenseId).build();
     }
-
 
     public static Expense expense(User payer, MemberExpense... memberExpenses) {
         return Expense.builder()
@@ -186,6 +223,8 @@ public class TestDataFactory {
                 .build();
     }
 
+
+
     public static Transfer transfer(User sender, User recipient, double amount) {
         return Transfer.builder()
                 .sender(sender)
@@ -214,6 +253,7 @@ public class TestDataFactory {
     }
 
 
+
     public static List<TravelMember> listTravelMember(User... users) {
 
         return Arrays.stream(users)
@@ -221,6 +261,8 @@ public class TestDataFactory {
                 .map(u -> TravelMember.builder().user(u).build())
                 .toList();
     }
+
+
 
     public static ExpenseUpdateRequestDTO expenseUpdateRequestDTO(long me2Id, OffsetDateTime newDate,
                                                                   String newExpenseName, String newExpenseDesc,
@@ -235,6 +277,8 @@ public class TestDataFactory {
                 .participantShares(participantShares)
                 .build();
     }
+
+
 
     public static ExpenseRequestDTO expenseRequestDTO(long payerId,
                                                       Map<Long, BigDecimal> participantShares,
@@ -258,60 +302,27 @@ public class TestDataFactory {
                 .build();
     }
 
+
+
     public static CreateCategoryRequest createCategoryRequest(String name) {
         return new CreateCategoryRequest(name);
     }
+
+
 
     public static EditCategoryRequest editCategoryRequest(String name) {
         return new EditCategoryRequest(name);
     }
 
+
+
     public static CreateTransferRequest createTransferRequest(long senderId, long recipientId, BigDecimal sum) {
         return new CreateTransferRequest(senderId, recipientId, sum);
     }
 
+
+
     public static EditTransferRequest editTransferRequest(BigDecimal sum) {
         return new EditTransferRequest(sum);
     }
-
-
-//    public static List<Expense> expenses(long nExpenses) {
-//
-//        List<Expense> expenses = new ArrayList<>();
-//
-//        for (long i = 1; i <= nExpenses; i++) {
-//
-//            String ex1Name = "Expense " + i;
-//
-//            BigDecimal ex1PayerShare = BigDecimal.valueOf(100L * i),
-//                    ex1ParticipantShare = BigDecimal.valueOf(200L * i).negate();
-//
-//            BigDecimal ex1Sum = (ex1PayerShare.add(ex1ParticipantShare)).abs();
-//
-//            User ex1Payer = User.builder().id(10 * i + 1).build(),
-//                    ex1Participant = User.builder().id(10 * i + 2).build();
-//
-//            MemberExpense ex1PayerME = MemberExpense.builder()
-//                    .participant(ex1Payer)
-//                    .share(ex1PayerShare)
-//                    .build(),
-//                    ex1ParticipantME = MemberExpense.builder()
-//                            .participant(ex1Participant)
-//                            .share(ex1ParticipantShare)
-//                            .build();
-//
-//            Category ex1Category = Category.builder().id(i).build();
-//
-//            expenses.add(Expense.builder()
-//                    .id(i)
-//                    .name(ex1Name)
-//                    .sum(ex1Sum)
-//                    .payer(ex1Payer)
-//                    .memberExpenses(Set.of(ex1PayerME, ex1ParticipantME))
-//                    .category(ex1Category)
-//                    .build());
-//        }
-//
-//        return expenses;
-//    }
 }
