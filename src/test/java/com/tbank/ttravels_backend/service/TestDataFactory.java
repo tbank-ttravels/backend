@@ -1,6 +1,5 @@
 package com.tbank.ttravels_backend.service;
 
-import com.tbank.ttravels_backend.dto.auth.AuthRegisterRequest;
 import com.tbank.ttravels_backend.dto.category.CreateCategoryRequest;
 import com.tbank.ttravels_backend.dto.category.EditCategoryRequest;
 import com.tbank.ttravels_backend.dto.expense_update.ExpenseUpdateRequestDTO;
@@ -39,21 +38,21 @@ public class TestDataFactory {
                 .build();
     }
 
-    public static Travel travel(Long id) {
+    public static Travel travel(long id) {
         return Travel.builder()
                 .id(id)
                 .name(TRAVEL_NAME)
                 .build();
     }
 
-    public static Category category(Long id) {
+    public static Category category(long id) {
         return Category.builder()
                 .id(id)
                 .name(CATEGORY_NAME)
                 .build();
     }
 
-    public static Category category(Long id, Travel travel) {
+    public static Category category(long id, Travel travel) {
         return Category.builder()
                 .id(id)
                 .travel(travel)
@@ -90,6 +89,7 @@ public class TestDataFactory {
                 .expense(expense)
                 .build();
     }
+
 
     public static Expense fullExpense(long expenseId) {
 
@@ -170,6 +170,19 @@ public class TestDataFactory {
                                 )
                                 .collect(Collectors.toSet())
                 )
+                .build();
+    }
+
+    public static Expense expense(long id, Category category,
+                                  BigDecimal sum, Travel travel, Set<MemberExpense> memberExpenses) {
+
+        return Expense.builder()
+                .id(id)
+                .name(EXPENSE_NAME + id)
+                .category(category)
+                .sum(sum)
+                .travel(travel)
+                .memberExpenses(memberExpenses)
                 .build();
     }
 
