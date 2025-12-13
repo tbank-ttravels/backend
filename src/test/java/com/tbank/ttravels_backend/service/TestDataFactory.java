@@ -6,9 +6,12 @@ import com.tbank.ttravels_backend.dto.expense_update.ExpenseUpdateRequestDTO;
 import com.tbank.ttravels_backend.dto.exspense.ExpenseRequestDTO;
 import com.tbank.ttravels_backend.dto.transfer.CreateTransferRequest;
 import com.tbank.ttravels_backend.dto.transfer.EditTransferRequest;
+import com.tbank.ttravels_backend.dto.travel.CreateTravelRequest;
+import com.tbank.ttravels_backend.dto.travel.EditTravelRequest;
 import com.tbank.ttravels_backend.entity.*;
 import com.tbank.ttravels_backend.enums.MemberRole;
 import com.tbank.ttravels_backend.enums.MemberStatus;
+import com.tbank.ttravels_backend.enums.TravelStatus;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -18,11 +21,21 @@ import java.util.stream.Collectors;
 
 public class TestDataFactory {
 
-    private static final String TRAVEL_NAME = "travel name";
-    private static final String EXPENSE_NAME = "expense name";
-    private static final String CATEGORY_NAME = "category name";
+    private static final String TRAVEL_NAME_PREFIX = "Travel name";
+    private static final String EXPENSE_NAME = "Expense name";
+    private static final String CATEGORY_NAME = "Category name";
     private static final String USER_NAME_PREFIX = "Name";
     private static final String USER_SURNAME_PREFIX = "Surname";
+
+    private static final String TRAVEL_DESC_PREFIX = "Travel Description";
+
+    private static final String PHONE = "+78005553535";
+
+    private static final OffsetDateTime START = OffsetDateTime.parse("2025-01-10T10:00:00+03:00");
+
+    private static final OffsetDateTime END = OffsetDateTime.parse("2025-01-20T10:00:00+03:00");
+
+
 
 
     public static User user(long id) {
@@ -42,10 +55,49 @@ public class TestDataFactory {
 
 
 
+    public static Travel fullTravel(long id) {
+
+        return Travel.builder()
+                .id(id)
+                .name(TRAVEL_NAME_PREFIX + id)
+                .description(TRAVEL_DESC_PREFIX + id)
+                .startDate(START)
+                .endDate(END)
+                .owner(user(id))
+                .status(TravelStatus.ACTIVE)
+                .build();
+    }
+
+    public static Travel travel(long id, TravelStatus status) {
+
+        return Travel.builder()
+                .id(id)
+                .name(TRAVEL_NAME_PREFIX + id)
+                .description(TRAVEL_DESC_PREFIX + id)
+                .startDate(START)
+                .endDate(END)
+                .owner(user(id))
+                .status(status)
+                .build();
+    }
+
     public static Travel travel(long id) {
         return Travel.builder()
                 .id(id)
-                .name(TRAVEL_NAME)
+                .name(TRAVEL_NAME_PREFIX + id)
+                .build();
+    }
+
+    public static Travel travel(long id, User owner) {
+
+        return Travel.builder()
+                .id(id)
+                .name(TRAVEL_NAME_PREFIX + id)
+                .description(TRAVEL_DESC_PREFIX + id)
+                .startDate(START)
+                .endDate(END)
+                .owner(owner)
+                .status(TravelStatus.ACTIVE)
                 .build();
     }
 
@@ -317,6 +369,7 @@ public class TestDataFactory {
 
 
     public static CreateTransferRequest createTransferRequest(long senderId, long recipientId, BigDecimal sum) {
+
         return new CreateTransferRequest(senderId, recipientId, sum);
     }
 
@@ -324,5 +377,20 @@ public class TestDataFactory {
 
     public static EditTransferRequest editTransferRequest(BigDecimal sum) {
         return new EditTransferRequest(sum);
+    }
+
+
+
+    public static CreateTravelRequest createTravelRequest(String name, String desc) {
+
+        return new CreateTravelRequest(name, desc, START, END);
+    }
+
+
+
+    public static EditTravelRequest editTravelRequest(String name, String description,
+                                                      OffsetDateTime startDate, OffsetDateTime endDate) {
+
+        return new EditTravelRequest(name, description, startDate, endDate);
     }
 }
