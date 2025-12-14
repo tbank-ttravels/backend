@@ -29,7 +29,7 @@ public class DeviceToken {
     @Column(nullable = false)
     private Platform platform;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
 
