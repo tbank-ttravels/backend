@@ -4,6 +4,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
+import com.google.firebase.messaging.MessagingErrorCode;
 import com.tbank.ttravels_backend.dto.notification.PushNotificationRequest;
 import com.tbank.ttravels_backend.dto.notification.PushNotificationResponse;
 import com.tbank.ttravels_backend.entity.DeviceToken;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 
 
@@ -28,56 +30,53 @@ public class NotificationService {
         List<DeviceToken> tokens = deviceTokenRepository.findByUserIdAndIsActiveTrue(userId);
 
         if (tokens.isEmpty()) {
-            log.warn("Нет активных токенов для пользователя: {}", userId);
             return PushNotificationResponse.builder()
                     .success(false)
-                    .message("Нет активных токенов для пользователя")
+                    .message("Нет активных токенов")
                     .build();
         }
 
-        String messageId = null;
-        for (DeviceToken token : tokens) {
-            PushNotificationResponse response = sendToToken(token.getToken(), request);
-            if (response.getSuccess()) {
-                messageId = response.getMessageId();
-            }
-        }
+        int successCount = 0;
+    String lastMessageId = null;
 
-        return PushNotificationResponse.builder()
-                .success(true)
-                .messageId(messageId)
-                .message("Уведомление отправлено устройствам" + tokens.size())
-                .build();
-    }
 
-    public PushNotificationResponse sendToToken(String token, PushNotificationRequest request) {
+     for (DeviceToken deviceToken : tokens) {
         try {
             Message message = Message.builder()
                     .setNotification(Notification.builder()
                             .setTitle(request.getTitle())
                             .setBody(request.getBody())
                             .build())
-                    .putAllData(request.getData() != null ? request.getData() : new HashMap<>())
-                    .setToken(token)
+                    .putAllData(request.getData() != null ? request.getData() : Map.of())
+                    .setToken(deviceToken.getToken())
                     .build();
 
-            String messageId = FirebaseMessaging.getInstance().send(message);
-
-            log.info("Уведомление успешно отправлено. MessageId: {}", messageId);
-
-            return PushNotificationResponse.builder()
-                    .success(true)
-                    .messageId(messageId)
-                    .message("Уведомление успешно отправлено")
-                    .build();
+            lastMessageId = FirebaseMessaging.getInstance().send(message);
+            successCount++;
 
         } catch (FirebaseMessagingException e) {
-            log.error("Ошибка при отправке уведомления на токен: {}", token, e);
-            return PushNotificationResponse.builder()
-                    .success(false)
-                    .message("Ошибка: " + e.getMessage())
-                    .build();
+            log.warn("Ошибка отправки на токен {}: {}",
+                    deviceToken.getToken(),
+                    e.getMessagingErrorCode());
+
+            if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED
+                    || e.getMessagingErrorCode() == MessagingErrorCode.INVALID_ARGUMENT) {
+                deviceTokenRepository.deactivateByToken(deviceToken.getToken());
+            }
         }
+    }
+        if (successCount == 0) {
+        return PushNotificationResponse.builder()
+                .success(false)
+                .message("Не удалось доставить уведомление")
+                .build();
+    }
+    
+        return PushNotificationResponse.builder()
+                .success(true)
+                .messageId(lastMessageId)
+                .message("Уведомление отправлено на " + successCount +" устройств")
+                .build();
     }
 
     public PushNotificationResponse sendToTopic(String topic, PushNotificationRequest request) {
@@ -110,29 +109,30 @@ public class NotificationService {
         }
     }
 
-    public void registerDeviceToken(Long userId, String token, Platform platform) {
-        try {
-            DeviceToken deviceToken = DeviceToken.builder()
-                    .userId(userId)
-                    .token(token)
-                    .platform(platform)
-                    .isActive(true)
-                    .build();
-
+    public void registerDeviceToken(Long userId, String token, Platform platform){
+            DeviceToken deviceToken = deviceTokenRepository.findByToken(token)
+                .map(existing -> {
+                    existing.setUserId(userId);
+                    existing.setPlatform(platform);
+                    existing.setIsActive(true);
+                    return existing;
+                })
+                .orElseGet(() -> DeviceToken.builder()
+                        .userId(userId)
+                        .token(token)
+                        .platform(platform)
+                        .isActive(true)
+                        .build()
+                );
             deviceTokenRepository.save(deviceToken);
             log.info("Токен зарегистрирован для пользователя: {} | Платформа: {}", userId, platform);
-
-        } catch (Exception e) {
-            log.error("Ошибка при регистрации токена", e);
-        }
     }
 
     public void unregisterDeviceToken(String token) {
-        try {
-            deviceTokenRepository.deleteByToken(token);
-            log.info("Токен удалён");
-        } catch (Exception e) {
-            log.error("Ошибка при удалении токена", e);
-        }
+           int updated = deviceTokenRepository.deactivateByToken(token);
+        if (updated == 0) {
+        throw new IllegalStateException("Токен не найден или деактивирован");
+    }
+    log.info("Токен деактивирован: {}", token);
     }
 }
