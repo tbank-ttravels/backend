@@ -8,7 +8,6 @@ import com.tbank.ttravels_backend.mapper.ExpenseDtoMapper;
 import com.tbank.ttravels_backend.repository.ExpenseRepository;
 import com.tbank.ttravels_backend.service.*;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -58,9 +57,8 @@ public class ExpenseServiceGetAllExpensesTest {
     }
 
 
-    @DisplayName("Успешное получение всех трат путешествия")
     @Test
-    void getAllExpensesInTravel() {
+    void getAllExpensesInTravel_shouldReturnExpenses() {
 
         // === Given ===
         Long travelId = 1L;
@@ -122,9 +120,8 @@ public class ExpenseServiceGetAllExpensesTest {
     }
 
 
-    @DisplayName("Ошибка: путешествие не найдено при запросе всех трат")
     @Test
-    void throwTravelNotFoundExceptionIfTravelNotFound3() {
+    void getAllExpensesInTravel_shouldThrowWhenTravelNotFound() {
 
         // === Given ===
         Long travelId = 1L;
