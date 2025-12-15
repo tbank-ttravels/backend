@@ -85,8 +85,8 @@ class TravelMemberServiceTest {
         when(travelService.findTravel(travelId)).thenReturn(travel);
         when(accountService.findUserByPhone(phone1.trim())).thenReturn(invited1);
         when(accountService.findUserByPhone(phone3)).thenReturn(invited2);
-        when(travelMemberRepository.existsByTravelIdAndUserId(travelId, invitedId1)).thenReturn(false);
-        when(travelMemberRepository.existsByTravelIdAndUserId(travelId, invitedId2)).thenReturn(false);
+        when(travelMemberRepository.findByUserIdAndTravelId(invitedId1, travelId)).thenReturn(Optional.empty());
+        when(travelMemberRepository.findByUserIdAndTravelId(invitedId2, travelId)).thenReturn(Optional.empty());
 
         travelMemberService.inviteMembers(travelId, List.of(phone1, phone2, phone3));
 
@@ -110,10 +110,11 @@ class TravelMemberServiceTest {
         Travel travel = TestDataFactory.travel(travelId);
         String phone = "+78001112233";
         User invited = TestDataFactory.user(invitedId, phone);
+        TravelMember invitedMember = TestDataFactory.travelMember(invitedId, invitedId, travelId, MemberRole.MEMBER, MemberStatus.ACCEPTED);
 
         when(travelService.findTravel(travelId)).thenReturn(travel);
         when(accountService.findUserByPhone(phone)).thenReturn(invited);
-        when(travelMemberRepository.existsByTravelIdAndUserId(travelId, invitedId)).thenReturn(true);
+        when(travelMemberRepository.findByUserIdAndTravelId(invitedId, travelId)).thenReturn(Optional.of(invitedMember));
 
         assertThatThrownBy(() -> travelMemberService.inviteMembers(travelId, List.of(phone)))
                 .isInstanceOf(ConflictStateException.class);
