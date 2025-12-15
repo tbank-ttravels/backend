@@ -393,4 +393,14 @@ public class TestDataFactory {
 
         return new EditTravelRequest(name, description, startDate, endDate);
     }
+
+
+
+    public static PasswordCredential passwordCredential(String passwordHash, User user) {
+        return PasswordCredential.builder()
+                .userId(user.getId())
+                .passwordHash(passwordHash)
+                .user(user)
+                .build();
+    }
 }
