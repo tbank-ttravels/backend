@@ -66,7 +66,7 @@ public class TransferServiceTest {
             transfer.setTravel(travel1);
             return null;
         }).when(travelService).addTransfer(any(Travel.class), any(Transfer.class));
-
+        doAnswer(invocation -> invocation.getArgument(0)).when(transferRepository).saveAndFlush(any(Transfer.class));
 
         // === When ===
         TransferResponse actual = transferService.createTransfer(travelId, createTransferRequest);
@@ -94,7 +94,7 @@ public class TransferServiceTest {
         verify(travelMemberService).findUserInTravel(senderId, travelId);
         verify(travelMemberService).findUserInTravel(recipientId, travelId);
         verify(travelService).addTransfer(eq(travel), any(Transfer.class));
-        verify(travelService).saveTravel(travel);
+        verify(transferRepository).saveAndFlush(any(Transfer.class));
         verifyNoMoreInteractions(travelService, travelMemberService, transferRepository);
     }
 
