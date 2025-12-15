@@ -40,4 +40,12 @@
                 endDelimiter=";"/>
     </changeSet>
 
+    <changeSet id="V4-create-device-tokens-table" author="you">
+    <sqlFile
+            path="changes/V4_create_device_tokens_table.sql"
+            relativeToChangelogFile="true"
+            splitStatements="false"
+            endDelimiter=";"/>
+</changeSet>
+
 </databaseChangeLog>
