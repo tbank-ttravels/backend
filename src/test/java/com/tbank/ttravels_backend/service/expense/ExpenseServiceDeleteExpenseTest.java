@@ -8,7 +8,6 @@ import com.tbank.ttravels_backend.mapper.ExpenseDtoMapper;
 import com.tbank.ttravels_backend.repository.ExpenseRepository;
 import com.tbank.ttravels_backend.service.*;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -55,9 +54,8 @@ public class ExpenseServiceDeleteExpenseTest {
     }
 
 
-    @DisplayName("Успешное удаление траты")
     @Test
-    void deleteExpenseSuccess() {
+    void deleteExpense_shouldDeleteExpense() {
 
         // === Given ===
         Long expenseId = 1L;
@@ -89,9 +87,8 @@ public class ExpenseServiceDeleteExpenseTest {
     }
 
 
-    @DisplayName("Ошибка: трата не найдена в путешествии (удаление траты)")
     @Test
-    void throwExpenseNotFoundInTravelExceptionIfExpenseNotFoundInTravel() {
+    void deleteExpense_shouldThrowWhenExpenseNotFoundInTravel() {
 
         // === Given ===
         Long travelId = 1L;
@@ -112,9 +109,8 @@ public class ExpenseServiceDeleteExpenseTest {
     }
 
 
-    @DisplayName("Ошибка: путешествие не найдено (удаление траты)")
     @Test
-    void throwTravelNotFoundExceptionIfTravelNotFound2() {
+    void deleteExpense_shouldThrowWhenTravelNotFound() {
 
         // === Given ===
         Long travelId = 1L;
