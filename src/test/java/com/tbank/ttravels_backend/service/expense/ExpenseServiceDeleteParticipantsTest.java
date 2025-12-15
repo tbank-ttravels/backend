@@ -14,7 +14,6 @@ import com.tbank.ttravels_backend.mapper.ExpenseDtoMapper;
 import com.tbank.ttravels_backend.repository.ExpenseRepository;
 import com.tbank.ttravels_backend.service.*;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -63,9 +62,8 @@ public class ExpenseServiceDeleteParticipantsTest {
         );
     }
 
-    @DisplayName("Успешное удаление участника из траты")
     @Test
-    void deleteParticipantsFromExpense() {
+    void deleteParticipantsFromExpense_shouldRemoveParticipants() {
 
         // === Given ===
         Long travelId = 1L;
@@ -123,9 +121,8 @@ public class ExpenseServiceDeleteParticipantsTest {
     }
 
 
-    @DisplayName("Ошибка: передан пустой список участников траты для удаления")
     @Test
-    void throwEmptyParticipantsListException() {
+    void deleteParticipantsFromExpense_shouldThrowWhenParticipantsListIsEmpty() {
 
         // === When & Then ===
         assertThrows(EmptyParticipantsListException.class,
@@ -136,9 +133,8 @@ public class ExpenseServiceDeleteParticipantsTest {
     }
 
 
-    @DisplayName("Ошибка: трата не найдена в путешествии (удаление участников траты)")
     @Test
-    void throwExpenseNotFoundInTravelException() {
+    void deleteParticipantsFromExpense_shouldThrowWhenExpenseNotFoundInTravel() {
 
         // === Given ===
         Long travelId = 1L;
@@ -159,9 +155,8 @@ public class ExpenseServiceDeleteParticipantsTest {
     }
 
 
-    @DisplayName("Ошибка: участник не найден в трате (удаление участников траты)")
     @Test
-    void throwUserNotFoundExpenseException() {
+    void deleteParticipantsFromExpense_shouldThrowWhenUserNotFoundInExpense() {
 
         // === Given ===
         Long travelId = 1L;
@@ -189,9 +184,8 @@ public class ExpenseServiceDeleteParticipantsTest {
     }
 
 
-    @DisplayName("Ошибка: невозможно удалить плательщика из траты")
     @Test
-    void throwCannotRemovePayerFromExpenseException() {
+    void deleteParticipantsFromExpense_shouldThrowWhenParticipantIsPayer() {
 
         // === Given ===
         Long travelId = 1L;
