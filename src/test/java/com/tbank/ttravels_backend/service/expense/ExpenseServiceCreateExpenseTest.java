@@ -9,7 +9,6 @@ import com.tbank.ttravels_backend.mapper.ExpenseDtoMapper;
 import com.tbank.ttravels_backend.repository.ExpenseRepository;
 import com.tbank.ttravels_backend.service.*;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -64,9 +63,8 @@ public class ExpenseServiceCreateExpenseTest {
     }
 
 
-    @DisplayName("Успешное создание траты")
     @Test
-    void createExpenseSuccess() {
+    void createExpense_shouldCreateExpense() {
 
         // === Given ===
         Long travelId = 2L;
@@ -179,9 +177,8 @@ public class ExpenseServiceCreateExpenseTest {
     }
 
 
-    @DisplayName("Ошибка: список участников траты пуст (создание траты)")
     @Test
-    void throwInvalidParticipantShareExceptionIfParticipantSharesIsEmpty() {
+    void createExpense_shouldThrowWhenParticipantSharesAreEmpty() {
 
         // === Given ===
         ExpenseRequestDTO requestDTO = TestDataFactory.expenseRequestDTO(
@@ -208,7 +205,7 @@ public class ExpenseServiceCreateExpenseTest {
 
 
     @Test
-    void throwUserNotFoundInTravelException() {
+    void createExpense_shouldThrowWhenUserNotFoundInTravel() {
 
         // === Given ===
         Long travelId = 1L;
@@ -241,9 +238,8 @@ public class ExpenseServiceCreateExpenseTest {
     }
 
 
-    @DisplayName("Ошибка: плательщик отсутствует среди участников траты (создание траты)")
     @Test
-    void throwPayerNotInParticipantsException() {
+    void createExpense_shouldThrowWhenPayerIsNotInParticipants() {
 
         // === Given ===
         Long travelId = 1L;
@@ -275,18 +271,16 @@ public class ExpenseServiceCreateExpenseTest {
     }
 
 
-    @DisplayName("Ошибка: доля участника траты некорректна (создание траты)")
     @ParameterizedTest
     @NullSource
     @ValueSource(doubles = {-99.0})
-    void throwInvalidParticipantShareExceptionForNullOrNegativeShare(Double invalidShare) {
+    void createExpense_shouldThrowWhenParticipantShareIsNullOrNegative(Double invalidShare) {
 
         // === Given ===
         Long travelId = 1L;
         Map<Long, BigDecimal> participantShares = new HashMap<>();
         participantShares.put(1L, invalidShare == null ? null : BigDecimal.valueOf(invalidShare));
-
-        ExpenseRequestDTO requestDTO = TestDataFactory.expenseRequestDTO(1L, participantShares,1L); //TODO категория не нужна
+        ExpenseRequestDTO requestDTO = TestDataFactory.expenseRequestDTO(1L, participantShares, 1L);
 
 
         // === When & Then ===
@@ -304,9 +298,8 @@ public class ExpenseServiceCreateExpenseTest {
     }
 
 
-    @DisplayName("Ошибка: категория траты не найдена (создание траты)")
     @Test
-    void throwCategoryNotFoundException() {
+    void createExpense_shouldThrowWhenCategoryNotFound() {
 
         // === Given ===
         Long travelId = 1L;
@@ -337,9 +330,8 @@ public class ExpenseServiceCreateExpenseTest {
     }
 
 
-    @DisplayName("Ошибка: путешествие не найдено (создание траты)")
     @Test
-    void throwTravelNotFoundException() {
+    void createExpense_shouldThrowWhenTravelNotFound() {
 
         // === Given ===
         long travelId = 1L,
@@ -368,9 +360,8 @@ public class ExpenseServiceCreateExpenseTest {
     }
 
 
-    @DisplayName("Ошибка: попытка создать дубликат траты")
     @Test
-    void throwDuplicateExpenseExceptionIf() {
+    void createExpense_shouldThrowWhenDuplicateExpenseExists() {
 
         // === Given ===
         Long travelId = 1L;
