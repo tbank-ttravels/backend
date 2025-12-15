@@ -1,4 +1,4 @@
-package com.tbank.ttravels_backend.CopyTravel;
+package com.tbank.ttravels_backend.service.Travel;
 
 import com.tbank.ttravels_backend.dto.travel.CreateTravelRequest;
 import com.tbank.ttravels_backend.dto.travel.EditTravelRequest;
@@ -14,8 +14,8 @@ import com.tbank.ttravels_backend.exception.TravelNotFoundException;
 import com.tbank.ttravels_backend.mapper.TravelMapper;
 import com.tbank.ttravels_backend.repository.TravelRepository;
 import com.tbank.ttravels_backend.service.AccountService;
+import com.tbank.ttravels_backend.service.TestDataFactory;
 import com.tbank.ttravels_backend.service.TravelService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -25,8 +25,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,61 +41,33 @@ class TravelServiceTest {
     private TravelMapper travelMapper;
     @Mock
     private AccountService accountService;
-
     @InjectMocks
     private TravelService travelService;
-
     @Captor
     private ArgumentCaptor<Travel> travelCaptor;
 
-    private User owner;
-    private Travel existingTravel;
-    private OffsetDateTime start;
-    private OffsetDateTime end;
-
-    @BeforeEach
-    void setUp() {
-        owner = User.builder()
-                .id(1L)
-                .phone("+78005553535")
-                .name("Иван")
-                .surname("Иванов")
-                .build();
-
-        start = OffsetDateTime.parse("2025-01-10T10:00:00+03:00");
-        end = OffsetDateTime.parse("2025-01-20T10:00:00+03:00");
-
-        existingTravel = Travel.builder()
-                .id(10L)
-                .name("Старое имя")
-                .description("Старое описание")
-                .startDate(start)
-                .endDate(end)
-                .owner(owner)
-                .status(TravelStatus.ACTIVE)
-                .travelMembers(new HashSet<>())
-                .expenses(new ArrayList<>())
-                .transfers(new ArrayList<>())
-                .build();
-    }
 
     @Test
     void createTravel_shouldCreateOwnerMemberAndMapResponse() {
 
-        CreateTravelRequest request = new CreateTravelRequest("Поездка", "Описание", start, end);
-        when(accountService.findUser(1L)).thenReturn(owner);
+        long ownerId = 1;
+        CreateTravelRequest request = TestDataFactory.createTravelRequest("Поездка", "Описание");
+        User owner = TestDataFactory.user(ownerId);
+        TravelResponse expectedResponse = new TravelResponse(99L, request.getName(), request.getDescription(),
+                request.getStartDate(), request.getEndDate(), TravelStatus.ACTIVE);
+
+        when(accountService.findUser(ownerId)).thenReturn(owner);
         when(travelRepository.save(any(Travel.class))).thenAnswer(invocation -> {
             Travel travel = invocation.getArgument(0);
             travel.setId(99L);
             return travel;
         });
-        TravelResponse expectedResponse = new TravelResponse(99L, "Поездка", "Описание", start, end, TravelStatus.ACTIVE);
         when(travelMapper.toTravelResponse(any(Travel.class))).thenReturn(expectedResponse);
 
-        TravelResponse response = travelService.createTravel(request, 1L);
+        TravelResponse response = travelService.createTravel(request, ownerId);
 
         assertThat(response).isEqualTo(expectedResponse);
-        verify(accountService).findUser(1L);
+        verify(accountService).findUser(ownerId);
         verify(travelRepository).save(travelCaptor.capture());
         Travel saved = travelCaptor.getValue();
         assertThat(saved.getOwner()).isEqualTo(owner);
@@ -114,32 +84,52 @@ class TravelServiceTest {
 
     @Test
     void getTravel_shouldReturnMappedTravel() {
-        when(travelRepository.findById(10L)).thenReturn(Optional.of(existingTravel));
-        TravelResponse mapped = new TravelResponse(10L, "Старое имя", "Старое описание", start, end, TravelStatus.ACTIVE);
+
+        long travelId = 10L;
+        User owner = TestDataFactory.user(1L);
+        Travel existingTravel = TestDataFactory.travel(travelId, owner);
+        TravelResponse mapped = new TravelResponse(travelId,
+                existingTravel.getName(), existingTravel.getDescription(),
+                existingTravel.getStartDate(), existingTravel.getEndDate(), TravelStatus.ACTIVE);
+
+        when(travelRepository.findById(travelId)).thenReturn(Optional.of(existingTravel));
         when(travelMapper.toTravelResponse(existingTravel)).thenReturn(mapped);
 
-        TravelResponse response = travelService.getTravel(10L);
+        TravelResponse response = travelService.getTravel(travelId);
 
         assertThat(response).isEqualTo(mapped);
-        verify(travelRepository).findById(10L);
+        verify(travelRepository).findById(travelId);
         verify(travelMapper).toTravelResponse(existingTravel);
     }
 
     @Test
     void getTravel_shouldThrowWhenNotFound() {
-        when(travelRepository.findById(10L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> travelService.getTravel(10L))
+        long travelId = 10;
+
+        when(travelRepository.findById(travelId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> travelService.getTravel(travelId))
                 .isInstanceOf(TravelNotFoundException.class)
-                .hasMessageContaining("10");
+                .hasMessageContaining(String.valueOf(travelId));
     }
 
     @Test
     void editTravel_shouldUpdateNonNullFieldsAndMap() {
-        EditTravelRequest request = new EditTravelRequest("Новое имя", null, null, end.plusDays(2));
-        when(travelRepository.findById(10L)).thenReturn(Optional.of(existingTravel));
+
+        long travelId = 10;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
+        String newTravelName = "new travel name";
+        OffsetDateTime newEndDate = existingTravel.getEndDate().plusDays(2);
+        EditTravelRequest request = TestDataFactory
+                .editTravelRequest(newTravelName, null, null, newEndDate);
+
+
+        when(travelRepository.findById(travelId)).thenReturn(Optional.of(existingTravel));
         when(travelRepository.save(any(Travel.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        TravelResponse mapped = new TravelResponse(10L, "Новое имя", "Старое описание", start, end.plusDays(2), TravelStatus.ACTIVE);
+        TravelResponse mapped = new TravelResponse(travelId, newTravelName, existingTravel.getDescription(),
+                existingTravel.getStartDate(), newEndDate, TravelStatus.ACTIVE);
+
         when(travelMapper.toTravelResponse(any(Travel.class))).thenReturn(mapped);
 
         TravelResponse response = travelService.editTravel(10L, request);
@@ -147,15 +137,21 @@ class TravelServiceTest {
         assertThat(response).isEqualTo(mapped);
         verify(travelRepository).save(travelCaptor.capture());
         Travel saved = travelCaptor.getValue();
-        assertThat(saved.getName()).isEqualTo("Новое имя");
-        assertThat(saved.getDescription()).isEqualTo("Старое описание");
-        assertThat(saved.getEndDate()).isEqualTo(end.plusDays(2));
-        assertThat(saved.getStartDate()).isEqualTo(start);
+        assertThat(saved.getName()).isEqualTo(newTravelName);
+        assertThat(saved.getDescription()).isEqualTo(existingTravel.getDescription());
+        assertThat(saved.getEndDate()).isEqualTo(newEndDate);
+        assertThat(saved.getStartDate()).isEqualTo(existingTravel.getStartDate());
     }
 
     @Test
     void editTravel_shouldThrowWhenInvalidDateRange() {
-        EditTravelRequest request = new EditTravelRequest(null, null, null, start.minusDays(1));
+
+        long travelId = 10;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
+        EditTravelRequest request = TestDataFactory.editTravelRequest(null,
+                null,
+                null,
+                existingTravel.getStartDate().minusDays(1));
         when(travelRepository.findById(10L)).thenReturn(Optional.of(existingTravel));
 
         assertThatThrownBy(() -> travelService.editTravel(10L, request))
@@ -166,9 +162,10 @@ class TravelServiceTest {
 
     @Test
     void editTravel_shouldThrowWhenNotFound() {
-        when(travelRepository.findById(10L)).thenReturn(Optional.empty());
+        long travelId = 1;
+        when(travelRepository.findById(travelId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> travelService.editTravel(10L, new EditTravelRequest()))
+        assertThatThrownBy(() -> travelService.editTravel(travelId, new EditTravelRequest()))
                 .isInstanceOf(TravelNotFoundException.class);
 
         verifyNoMoreInteractions(travelRepository);
@@ -176,10 +173,11 @@ class TravelServiceTest {
 
     @Test
     void closeTravel_shouldSetStatusClosed() {
-        existingTravel.setStatus(TravelStatus.ACTIVE);
-        when(travelRepository.findById(10L)).thenReturn(Optional.of(existingTravel));
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
+        when(travelRepository.findById(travelId)).thenReturn(Optional.of(existingTravel));
 
-        travelService.closeTravel(10L);
+        travelService.closeTravel(travelId);
 
         assertThat(existingTravel.getStatus()).isEqualTo(TravelStatus.CLOSED);
         verify(travelRepository).save(existingTravel);
@@ -187,7 +185,8 @@ class TravelServiceTest {
 
     @Test
     void closeTravel_shouldThrowWhenAlreadyClosed() {
-        existingTravel.setStatus(TravelStatus.CLOSED);
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.travel(travelId, TravelStatus.CLOSED);
         when(travelRepository.findById(10L)).thenReturn(Optional.of(existingTravel));
 
         assertThatThrownBy(() -> travelService.closeTravel(10L))
@@ -198,18 +197,20 @@ class TravelServiceTest {
 
     @Test
     void closeTravel_shouldThrowWhenNotFound() {
-        when(travelRepository.findById(10L)).thenReturn(Optional.empty());
+        long travelId = 1;
+        when(travelRepository.findById(travelId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> travelService.closeTravel(10L))
+        assertThatThrownBy(() -> travelService.closeTravel(travelId))
                 .isInstanceOf(TravelNotFoundException.class);
     }
 
     @Test
     void reopenTravel_shouldSetStatusActive() {
-        existingTravel.setStatus(TravelStatus.CLOSED);
-        when(travelRepository.findById(10L)).thenReturn(Optional.of(existingTravel));
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.travel(travelId, TravelStatus.CLOSED);
+        when(travelRepository.findById(travelId)).thenReturn(Optional.of(existingTravel));
 
-        travelService.reopenTravel(10L);
+        travelService.reopenTravel(travelId);
 
         assertThat(existingTravel.getStatus()).isEqualTo(TravelStatus.ACTIVE);
         verify(travelRepository).save(existingTravel);
@@ -217,7 +218,8 @@ class TravelServiceTest {
 
     @Test
     void reopenTravel_shouldThrowWhenAlreadyActive() {
-        existingTravel.setStatus(TravelStatus.ACTIVE);
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
         when(travelRepository.findById(10L)).thenReturn(Optional.of(existingTravel));
 
         assertThatThrownBy(() -> travelService.reopenTravel(10L))
@@ -228,26 +230,31 @@ class TravelServiceTest {
 
     @Test
     void reopenTravel_shouldThrowWhenNotFound() {
-        when(travelRepository.findById(10L)).thenReturn(Optional.empty());
+        long travelId = 1;
+        when(travelRepository.findById(travelId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> travelService.reopenTravel(10L))
+        assertThatThrownBy(() -> travelService.reopenTravel(travelId))
                 .isInstanceOf(TravelNotFoundException.class);
     }
 
     @Test
     void deleteTravel_shouldDelete() {
-        when(travelRepository.findById(10L)).thenReturn(Optional.of(existingTravel));
 
-        travelService.deleteTravel(10L);
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
+        when(travelRepository.findById(travelId)).thenReturn(Optional.of(existingTravel));
+
+        travelService.deleteTravel(travelId);
 
         verify(travelRepository).delete(existingTravel);
     }
 
     @Test
     void deleteTravel_shouldThrowWhenNotFound() {
-        when(travelRepository.findById(10L)).thenReturn(Optional.empty());
+        long travelId = 1;
+        when(travelRepository.findById(travelId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> travelService.deleteTravel(10L))
+        assertThatThrownBy(() -> travelService.deleteTravel(travelId))
                 .isInstanceOf(TravelNotFoundException.class);
 
         verify(travelRepository, never()).delete(any());
@@ -255,8 +262,10 @@ class TravelServiceTest {
 
     @Test
     void addExpense_shouldAttachExpense() {
+
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
         Expense expense = new Expense();
-        existingTravel.getExpenses().clear();
 
         travelService.addExpense(existingTravel, expense);
 
@@ -266,6 +275,9 @@ class TravelServiceTest {
 
     @Test
     void addExpense_shouldThrowOnNulls() {
+
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
         Expense expense = new Expense();
 
         assertThatThrownBy(() -> travelService.addExpense(null, expense))
@@ -277,6 +289,9 @@ class TravelServiceTest {
 
     @Test
     void addExpense_shouldThrowOnDuplicate() {
+
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
         Expense expense = new Expense();
         existingTravel.getExpenses().add(expense);
 
@@ -286,6 +301,9 @@ class TravelServiceTest {
 
     @Test
     void removeExpense_shouldDetachExpense() {
+
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
         Expense expense = new Expense();
         expense.setTravel(existingTravel);
         existingTravel.getExpenses().add(expense);
@@ -298,8 +316,9 @@ class TravelServiceTest {
 
     @Test
     void addTransfer_shouldAttachTransfer() {
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
         Transfer transfer = new Transfer();
-        existingTravel.getTransfers().clear();
 
         travelService.addTransfer(existingTravel, transfer);
 
@@ -309,6 +328,8 @@ class TravelServiceTest {
 
     @Test
     void removeTransfer_shouldDetachTransfer() {
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
         Transfer transfer = new Transfer();
         transfer.setTravel(existingTravel);
         existingTravel.getTransfers().add(transfer);
@@ -321,6 +342,8 @@ class TravelServiceTest {
 
     @Test
     void addTransfer_shouldThrowOnNulls() {
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
         Transfer transfer = new Transfer();
 
         assertThatThrownBy(() -> travelService.addTransfer(null, transfer))
@@ -332,8 +355,10 @@ class TravelServiceTest {
 
     @Test
     void addTravelMember_shouldAttachMember() {
+
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
         TravelMember member = new TravelMember();
-        existingTravel.getTravelMembers().clear();
 
         travelService.addTravelMember(existingTravel, member);
 
@@ -343,6 +368,9 @@ class TravelServiceTest {
 
     @Test
     void addTravelMember_shouldThrowOnNulls() {
+
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
         TravelMember member = new TravelMember();
 
         assertThatThrownBy(() -> travelService.addTravelMember(null, member))
@@ -354,36 +382,45 @@ class TravelServiceTest {
 
     @Test
     void findTravel_shouldReturnWhenExists() {
-        when(travelRepository.findById(10L)).thenReturn(Optional.of(existingTravel));
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
+        when(travelRepository.findById(travelId)).thenReturn(Optional.of(existingTravel));
 
-        Travel result = travelService.findTravel(10L);
+        Travel result = travelService.findTravel(travelId);
 
         assertThat(result).isEqualTo(existingTravel);
     }
 
     @Test
     void findTravel_shouldThrowWhenNotFound() {
-        when(travelRepository.findById(10L)).thenReturn(Optional.empty());
+        long travelId = 1;
+        when(travelRepository.findById(travelId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> travelService.findTravel(10L))
+        assertThatThrownBy(() -> travelService.findTravel(travelId))
                 .isInstanceOf(TravelNotFoundException.class)
-                .hasMessageContaining("10");
+                .hasMessageContaining(String.valueOf(travelId));
     }
 
     @Test
     void checkTravel_shouldThrowWhenNotFound() {
-        when(travelRepository.findById(10L)).thenReturn(Optional.empty());
+        long travelId = 1;
+        when(travelRepository.findById(travelId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> travelService.checkTravel(10L))
+        assertThatThrownBy(() -> travelService.checkTravel(travelId))
                 .isInstanceOf(TravelNotFoundException.class);
     }
 
     @Test
     void checkTravel_shouldReturnWhenExists() {
-        when(travelRepository.findById(10L)).thenReturn(Optional.of(existingTravel));
 
-        travelService.checkTravel(10L);
+        long travelId = 1;
+        Travel existingTravel = TestDataFactory.fullTravel(travelId);
+        when(travelRepository.findById(travelId)).thenReturn(Optional.of(existingTravel));
 
-        verify(travelRepository).findById(10L);
+        travelService.checkTravel(travelId);
+
+        verify(travelRepository).findById(travelId);
     }
 }
+
+
