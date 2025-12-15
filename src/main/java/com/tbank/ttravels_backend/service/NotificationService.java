@@ -30,6 +30,7 @@ public class NotificationService {
         List<DeviceToken> tokens = deviceTokenRepository.findByUserIdAndIsActiveTrue(userId);
 
         if (tokens.isEmpty()) {
+            log.info("Нет активных FCM-токенов для userId = {}", userId);
             return PushNotificationResponse.builder()
                     .success(false)
                     .message("Нет активных токенов")
@@ -130,9 +131,9 @@ public class NotificationService {
 
     public void unregisterDeviceToken(String token) {
            int updated = deviceTokenRepository.deactivateByToken(token);
-        if (updated == 0) {
-        throw new IllegalStateException("Токен не найден или деактивирован");
-    }
-    log.info("Токен деактивирован: {}", token);
+         if (updated > 0) {
+        log.info("FCM-токен деактивирован: {}", token);
+    } else {log.info("FCM-токен {} уже был деактивирован или не найден", token);
+        }
     }
 }
