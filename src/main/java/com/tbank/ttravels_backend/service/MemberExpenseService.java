@@ -13,8 +13,6 @@ public class MemberExpenseService {
     public void addMemberExpense(Expense expense,
                                  MemberExpense memberExpense) {
 
-        checkExpenseAndMemberExpenseIsNull(expense, memberExpense);
-
         if (expense.getMemberExpenses().contains(memberExpense)) {
             throw new DuplicateParticipantException("Участник с id = " + memberExpense.getId() +
                     "уже участвует в трате '" + expense.getName() + "'");
@@ -28,20 +26,7 @@ public class MemberExpenseService {
     public void removeMemberExpense(Expense expense,
                                     MemberExpense memberExpense) {
 
-        checkExpenseAndMemberExpenseIsNull(expense, memberExpense);
-
         expense.getMemberExpenses().remove(memberExpense);
         memberExpense.setExpense(null);
-    }
-
-    private void checkExpenseAndMemberExpenseIsNull(Expense expense,
-                                                    MemberExpense memberExpense) {
-
-        if (expense == null) {
-            throw new IllegalArgumentException("Expense is null");
-        }
-        if (memberExpense == null) {
-            throw new IllegalArgumentException("MemberExpense is null");
-        }
     }
 }

@@ -106,7 +106,7 @@ public class ExpenseService {
     private void validateExpenseRequestDTO(ExpenseRequestDTO expenseRequestDTO, Long travelId) {
 
         if (expenseRequestDTO.getParticipantShares().isEmpty()) {
-            throw new InvalidParticipantShareException("Трата должена содержать хотя бы одного участника");
+            throw new InvalidParticipantShareException("Трата должна содержать хотя бы одного участника");
         }
 
         // Все ли являются участниками поездки?
