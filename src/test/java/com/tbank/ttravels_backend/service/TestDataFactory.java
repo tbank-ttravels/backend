@@ -403,4 +403,21 @@ public class TestDataFactory {
                 .user(user)
                 .build();
     }
+
+
+
+    public static RefreshToken refreshToken(long id) {
+
+        return RefreshToken.builder().id(id).build();
+    }
+
+    public static RefreshToken refreshToken(long id, User user, boolean revoked, OffsetDateTime expiresAt) {
+
+        return RefreshToken.builder()
+                .id(id)
+                .user(user)
+                .revoked(revoked)
+                .expiresAt(expiresAt)
+                .build();
+    }
 }
