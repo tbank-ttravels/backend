@@ -21,7 +21,7 @@ class MemberExpenseServiceTest {
 
 
     @Test
-    void addMemberExpense() {
+    void addMemberExpense_shouldAddMemberToExpense() {
 
         // === Given ===
         Expense expense = TestDataFactory.expense(1L);
@@ -44,28 +44,9 @@ class MemberExpenseServiceTest {
         );
     }
 
-    private void assertExpenseContainsAllMembers(Expense expense, List<MemberExpense> expectedMembers) {
-
-        // === When & Then ===
-        assertThat(expense.getMemberExpenses())
-                .as("Expense must contain all provided member expenses")
-                .isNotNull()
-                .containsExactlyInAnyOrderElementsOf(expectedMembers);
-    }
-
-    private void assertMembersContainExpense(List<MemberExpense> memberExpenses, Expense expectedExpense) {
-
-        // === When & Then ===
-        assertThat(memberExpenses)
-                .as("Every MemberExpense must reference the Expense")
-                .isNotNull()
-                .allSatisfy(me -> assertThat(me.getExpense().getId())
-                        .isEqualTo(expectedExpense.getId()));
-    }
-
 
     @Test
-    void removeMemberExpense() {
+    void removeMemberExpense_shouldRemoveMemberFromExpense() {
 
         // === Given ===
         Expense expense = TestDataFactory.expense(1L);
@@ -91,7 +72,7 @@ class MemberExpenseServiceTest {
     }
 
     @Test
-    void throwDuplicateParticipantException() {
+    void addMemberExpense_shouldThrowWhenParticipantAlreadyExists() {
 
         // === Given ===
         Expense expense = TestDataFactory.expense(1L);
@@ -104,5 +85,24 @@ class MemberExpenseServiceTest {
         // === When & Then ===
         assertThrows(DuplicateParticipantException.class,
                 () -> memberExpenseService.addMemberExpense(expense, me2));
+    }
+
+    private void assertExpenseContainsAllMembers(Expense expense, List<MemberExpense> expectedMembers) {
+
+        // === When & Then ===
+        assertThat(expense.getMemberExpenses())
+                .as("Expense must contain all provided member expenses")
+                .isNotNull()
+                .containsExactlyInAnyOrderElementsOf(expectedMembers);
+    }
+
+    private void assertMembersContainExpense(List<MemberExpense> memberExpenses, Expense expectedExpense) {
+
+        // === When & Then ===
+        assertThat(memberExpenses)
+                .as("Every MemberExpense must reference the Expense")
+                .isNotNull()
+                .allSatisfy(me -> assertThat(me.getExpense().getId())
+                        .isEqualTo(expectedExpense.getId()));
     }
 }
