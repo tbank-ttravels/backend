@@ -14,7 +14,6 @@ import com.tbank.ttravels_backend.mapper.ExpenseDtoMapper;
 import com.tbank.ttravels_backend.repository.ExpenseRepository;
 import com.tbank.ttravels_backend.service.*;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -69,9 +68,8 @@ public class ExpenseServiceUpdateExpenseTest {
         );
     }
 
-    @DisplayName("Успешное обновление траты")
     @Test
-    void updateExpense() {
+    void updateExpense_shouldUpdateExpense() {
 
         // === Given ===
         Long travelId = 1L, expenseId = 2L;
@@ -85,7 +83,6 @@ public class ExpenseServiceUpdateExpenseTest {
 
         Expense expense = TestDataFactory.fullExpense(expenseId);
 
-        // Получение участника и его доли
         Map.Entry<User, BigDecimal> participantEntry = expense.getMemberExpenses().stream()
                 .filter(me -> !me.getParticipant().getId().equals(expense.getPayer().getId()))
                 .findFirst()
@@ -114,13 +111,10 @@ public class ExpenseServiceUpdateExpenseTest {
 
         // === Then ===
         assertAll(
-                // Проверка DTO
                 () -> assertDtoFields(actual, participant, newExpenseName, newExpenseDesc, newValueMe1, valueMe2, newDate, newCategory),
 
-                // Проверка долей участников
                 () -> assertParticipantShares(actual, payer, participant, newValueMe1, valueMe2),
 
-                // Проверка знаков долей в сущности после смены плательщика
                 () -> assertMemberExpenseSigns(expense, participant)
         );
 
@@ -133,45 +127,9 @@ public class ExpenseServiceUpdateExpenseTest {
         verifyNoMoreInteractions(expenseRepository, travelMemberService, categoryService);
     }
 
-    private void assertDtoFields(ExpenseResponseDTO actual, User participant, String newName,
-                                 String newDesc, BigDecimal newValueMe1, BigDecimal valueMe2,
-                                 OffsetDateTime newDate, Category newCategory) {
-        assertThat(actual).isNotNull();
-        assertThat(actual.payerId()).isEqualTo(participant.getId());
-        assertThat(actual.name()).isEqualTo(newName);
-        assertThat(actual.description()).isEqualTo(newDesc);
-        assertThat(actual.sum()).isEqualByComparingTo(newValueMe1.abs().add(valueMe2.abs()));
-        assertThat(actual.date()).isEqualTo(newDate);
-        assertThat(actual.categoryId()).isEqualTo(newCategory.getId());
-        assertThat(actual.categoryName()).isEqualTo(newCategory.getName());
-    }
 
-    private void assertParticipantShares(ExpenseResponseDTO actual, User payer, User participant,
-                                         BigDecimal newValueMe1, BigDecimal valueMe2) {
-        for (MemberExpenseResponseDTO p : actual.participants()) {
-            if (p.userId().equals(payer.getId())) {
-                assertThat(p.share()).isEqualByComparingTo(newValueMe1);
-            } else if (p.userId().equals(participant.getId())) {
-                assertThat(p.share()).isEqualByComparingTo(valueMe2.abs()); // DTO всегда положительное
-            } else {
-                fail("Unexpected participant id: " + p.userId());
-            }
-        }
-    }
-
-    private void assertMemberExpenseSigns(Expense expense, User newPayer) {
-        expense.getMemberExpenses().forEach(me -> {
-            if (me.getParticipant().getId().equals(newPayer.getId())) { // Новый плательщик
-                assertThat(me.getShare().signum()).isPositive();
-            } else { // Все остальные
-                assertThat(me.getShare().signum()).isNegative();
-            }
-        });
-    }
-
-    @DisplayName("Ошибка: тело запроса пустое — нечего обновлять")
     @Test
-    void throwEmptyUpdateRequestException() {
+    void updateExpense_shouldThrowWhenUpdateRequestIsEmpty() {
 
         // === Given ===
         Long travelId = 1L;
@@ -189,9 +147,8 @@ public class ExpenseServiceUpdateExpenseTest {
     }
 
 
-    @DisplayName("Ошибка: участник из существующего спика участников траты отсутствует в текущей трате (обновление траты)")
     @Test
-    void throwUserNotFoundExpenseException() {
+    void updateExpense_shouldThrowWhenUserNotFoundInExpense() {
 
         // === Given ===
         Long travelId = 1L;
@@ -214,11 +171,10 @@ public class ExpenseServiceUpdateExpenseTest {
     }
 
 
-    @DisplayName("Ошибка: недопустимое значение доли участника (<= 0) (обновление траты)")
     @ParameterizedTest
     @NullSource
     @ValueSource(doubles = {-99.0})
-    void throwInvalidParticipantShareException(Double invalidShare) {
+    void updateExpense_shouldThrowWhenParticipantShareIsInvalid(Double invalidShare) {
 
         // === Given ===
         Long travelId = 1L;
@@ -244,9 +200,8 @@ public class ExpenseServiceUpdateExpenseTest {
     }
 
 
-    @DisplayName("Ошибка: трата не найдена в путешествии (обновление траты)")
     @Test
-    void throwExpenseNotFoundInTravelException() {
+    void updateExpense_shouldThrowWhenExpenseNotFoundInTravel() {
 
         // === Given ===
         Long travelId = 1L;
@@ -261,5 +216,44 @@ public class ExpenseServiceUpdateExpenseTest {
         // === When & Then ===
         assertThrows(ExpenseNotFoundInTravelException.class,
                 () -> expenseService.updateExpense(travelId, expenseId, requestDTO));
+    }
+
+
+    private void assertDtoFields(ExpenseResponseDTO actual, User participant, String newName,
+                                 String newDesc, BigDecimal newValueMe1, BigDecimal valueMe2,
+                                 OffsetDateTime newDate, Category newCategory) {
+        assertThat(actual).isNotNull();
+        assertThat(actual.payerId()).isEqualTo(participant.getId());
+        assertThat(actual.name()).isEqualTo(newName);
+        assertThat(actual.description()).isEqualTo(newDesc);
+        assertThat(actual.sum()).isEqualByComparingTo(newValueMe1.abs().add(valueMe2.abs()));
+        assertThat(actual.date()).isEqualTo(newDate);
+        assertThat(actual.categoryId()).isEqualTo(newCategory.getId());
+        assertThat(actual.categoryName()).isEqualTo(newCategory.getName());
+    }
+
+
+    private void assertParticipantShares(ExpenseResponseDTO actual, User payer, User participant,
+                                         BigDecimal newValueMe1, BigDecimal valueMe2) {
+        for (MemberExpenseResponseDTO p : actual.participants()) {
+            if (p.userId().equals(payer.getId())) {
+                assertThat(p.share()).isEqualByComparingTo(newValueMe1);
+            } else if (p.userId().equals(participant.getId())) {
+                assertThat(p.share()).isEqualByComparingTo(valueMe2.abs());
+            } else {
+                fail("Unexpected participant id: " + p.userId());
+            }
+        }
+    }
+
+
+    private void assertMemberExpenseSigns(Expense expense, User newPayer) {
+        expense.getMemberExpenses().forEach(me -> {
+            if (me.getParticipant().getId().equals(newPayer.getId())) {
+                assertThat(me.getShare().signum()).isPositive();
+            } else {
+                assertThat(me.getShare().signum()).isNegative();
+            }
+        });
     }
 }
