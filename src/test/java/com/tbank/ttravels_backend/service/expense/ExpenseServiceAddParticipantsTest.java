@@ -11,7 +11,6 @@ import com.tbank.ttravels_backend.mapper.ExpenseDtoMapper;
 import com.tbank.ttravels_backend.repository.ExpenseRepository;
 import com.tbank.ttravels_backend.service.*;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -64,9 +63,8 @@ public class ExpenseServiceAddParticipantsTest {
     }
 
 
-    @DisplayName("Успешное добавление новых участников в трату")
     @Test
-    void addParticipantsToExpense() {
+    void addParticipantsToExpense_shouldAddParticipants() {
 
         // === Given ===
         Long travelId = 1L,
@@ -123,12 +121,12 @@ public class ExpenseServiceAddParticipantsTest {
 
                 () -> assertThat(actual.participants()).hasSize(3),
 
-                // DTO содержит нового участника
+
                 () -> assertThat(actual.participants())
                         .extracting(MemberExpenseResponseDTO::userId)
                         .contains(newParticipantId),
 
-                // проверка, что в DTO доля нового участника положительная
+
                 () -> {
                     actual.participants().stream()
                             .filter(p -> p.userId().equals(newParticipantId))
@@ -138,8 +136,6 @@ public class ExpenseServiceAddParticipantsTest {
                                     .isEqualByComparingTo(shareNewParticipant));
                 },
 
-                // TODO Это норм?
-                // проверка доли новой сущности
                 () -> expense.getMemberExpenses().forEach(me -> {
                     if (me.getParticipant().getId().equals(newParticipantId)) {
                         assertThat(me.getShare()).isEqualByComparingTo(shareNewParticipant.negate());
@@ -149,9 +145,8 @@ public class ExpenseServiceAddParticipantsTest {
     }
 
 
-    @DisplayName("Ошибка: список новых участников траты пуст")
     @Test
-    void throwEmptyParticipantsListException() {
+    void addParticipantsToExpense_shouldThrowWhenParticipantsListIsEmpty() {
 
         // === When & Then ===
         assertThrows(EmptyParticipantsListException.class,
@@ -162,11 +157,10 @@ public class ExpenseServiceAddParticipantsTest {
     }
 
 
-    @DisplayName("Ошибка: доля участника траты некорректна (≤ 0)")
     @ParameterizedTest
     @NullSource
     @ValueSource(doubles = {-99.0})
-    void throwInvalidParticipantShareException(Double invalidShare) {
+    void addParticipantsToExpense_shouldThrowWhenParticipantShareIsInvalid(Double invalidShare) {
 
         // === GIVEN ===
         Map<Long, BigDecimal> participantShares = new HashMap<>();
@@ -184,9 +178,8 @@ public class ExpenseServiceAddParticipantsTest {
     }
 
 
-    @DisplayName("Ошибка: трата не найдена в указанном путешествии")
     @Test
-    void throwExpenseNotFoundInTravelException() {
+    void addParticipantsToExpense_shouldThrowWhenExpenseNotFoundInTravel() {
 
         // === Given ===
         Long travelId = 1L;
@@ -205,9 +198,8 @@ public class ExpenseServiceAddParticipantsTest {
     }
 
 
-    @DisplayName("Ошибка: новый участник траты не принадлежит путешествию")
     @Test
-    void throwUserNotFoundInTravelException() {
+    void addParticipantsToExpense_shouldThrowWhenUserNotFoundInTravel() {
 
         // === Given ===
         Long travelId = 1L;
@@ -232,9 +224,8 @@ public class ExpenseServiceAddParticipantsTest {
     }
 
 
-    @DisplayName("Ошибка: участник траты уже есть в трате(дубликат)")
     @Test
-    void throwDuplicateParticipantException() {
+    void addParticipantsToExpense_shouldThrowWhenParticipantIsDuplicate() {
 
         // === Given ===
         Long travelId = 1L;
