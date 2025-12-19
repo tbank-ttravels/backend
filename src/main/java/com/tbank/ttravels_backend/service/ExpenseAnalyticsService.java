@@ -18,7 +18,6 @@ import static com.tbank.ttravels_backend.dto.expense_analytics.CategoryAnalytics
  * Сервис формирования аналитики расходов по категориям внутри поездки.
  */
 
-// TODO если трат нет
 @Service
 @RequiredArgsConstructor
 public class ExpenseAnalyticsService {

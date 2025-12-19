@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
-// TODO батч операции
 @Service
 @RequiredArgsConstructor
 public class ExpenseService {
