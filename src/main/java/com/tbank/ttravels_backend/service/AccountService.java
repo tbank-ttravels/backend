@@ -54,6 +54,7 @@ public class AccountService {
                 });
     }
 
+    @Transactional
     public UserDTO editUser(Long userId, EditUserRequest request) {
         User user = findUser(userId);
 
